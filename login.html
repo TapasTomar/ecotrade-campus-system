@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EcoTrade — Verification Portal</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "canvas-background": "#f5f5f7",
+          "mist-sky": "#e3eefc",
+          "secondary": "#4854bb",
+          "text-primary": "#1d1d1f",
+          "text-tertiary": "#a1a1a6",
+          "glass-surface": "rgba(255, 255, 255, 0.72)",
+          "input-border": "rgba(0, 0, 0, 0.08)",
+          "text-secondary": "#86868b",
+          "mist-sand": "#f7ede2",
+          "mist-lavender": "#e8e5f5",
+          "secondary-fixed": "#dfe0ff",
+          "input-surface": "rgba(0, 0, 0, 0.03)",
+          "glass-border": "rgba(0, 0, 0, 0.06)",
+          "on-secondary-fixed": "#000965"
+        },
+        "spacing": { "space-sm": "0.5rem", "space-md": "1rem" },
+        "fontFamily": {
+          "headline-lg": ["Inter"], "label-md": ["Inter"], "body-md": ["Inter"],
+          "mono-input": ["JetBrains Mono"], "body-sm": ["Inter"], "headline-md": ["Inter"], "mono-label": ["JetBrains Mono"]
+        },
+        "fontSize": {
+          "headline-lg": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+          "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+          "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+          "mono-input": ["20px", { "lineHeight": "24px", "letterSpacing": "0.12em", "fontWeight": "500" }],
+          "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" }],
+          "headline-md": ["20px", { "lineHeight": "26px", "letterSpacing": "-0.015em", "fontWeight": "500" }],
+          "mono-label": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
+  .ios-glass-card {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 20px 50px -12px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.02);
+  }
+  .specular-top-edge { box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.2); }
+  .tab-spring { transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1); }
+</style>
+</head>
+<body class="bg-canvas-background text-text-primary min-h-screen relative flex flex-col justify-between overflow-x-hidden selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+
+<div aria-hidden="true" class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+  <div class="absolute -top-[10%] left-1/2 -translate-x-1/2 w-[720px] h-[480px] bg-mist-sky rounded-full blur-[120px] opacity-60"></div>
+  <div class="absolute top-[28%] -left-[10%] w-[580px] h-[480px] bg-mist-lavender rounded-full blur-[130px] opacity-50"></div>
+  <div class="absolute top-[38%] -right-[8%] w-[540px] h-[440px] bg-mist-sand rounded-full blur-[120px] opacity-60"></div>
+</div>
+
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-space-md py-space-sm bg-glass-surface backdrop-blur-xl border-b border-glass-border shadow-sm">
+  <div class="max-w-7xl mx-auto w-full flex justify-between items-center">
+    <div class="flex items-center gap-space-sm">
+      <span class="text-headline-md font-headline-md tracking-tight text-text-primary">EcoTrade</span>
+      <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-input-surface border border-glass-border font-mono-label text-mono-label text-text-secondary">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        CAMPUS NET
+      </span>
+    </div>
+  </div>
+</header>
+
+<main class="relative z-10 flex-1 flex flex-col items-center justify-center px-space-md pt-24 pb-12 w-full max-w-7xl mx-auto">
+  <div class="ios-glass-card rounded-[24px] max-w-[480px] w-full p-8 sm:p-10 my-auto transition-all duration-300">
+    <div class="text-center mb-6">
+      <h1 class="font-headline-lg text-headline-lg text-text-primary tracking-tight">EcoTrade</h1>
+      <p class="font-body-md text-body-md text-text-secondary mt-1" id="portal-subtitle">Sign in with Student ID</p>
+    </div>
+
+    <div class="bg-black/[0.04] p-1 rounded-full border border-black/5 flex items-center mb-6 relative">
+      <button class="tab-spring flex-1 py-1.5 px-4 rounded-full font-label-md text-label-md font-medium text-text-primary bg-white shadow-sm text-center focus:outline-none" id="tab-signin" onclick="switchView('signin')" type="button">
+        Sign In
+      </button>
+      <button class="tab-spring flex-1 py-1.5 px-4 rounded-full font-label-md text-label-md font-medium text-text-secondary hover:text-text-primary text-center focus:outline-none" id="tab-signup" onclick="switchView('signup')" type="button">
+        Create Account
+      </button>
+    </div>
+
+    <div id="auth-alert" class="hidden mb-5 px-4 py-2.5 rounded-2xl text-body-sm font-medium border"></div>
+
+    <!-- VIEW 1: SIGN IN -->
+    <form class="space-y-5" id="view-signin" onsubmit="handleSignIn(event)">
+      <div>
+        <div class="flex justify-between items-baseline mb-1.5">
+          <label class="font-label-md text-label-md text-text-primary" for="signin-studentid">Student ID</label>
+          <span class="font-mono-label text-mono-label text-text-tertiary">11 digits</span>
+        </div>
+        <div class="relative flex items-center">
+          <input class="w-full h-12 pl-4 pr-24 rounded-2xl bg-input-surface border border-input-border font-mono-input text-[15px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition-all" id="signin-studentid" inputmode="numeric" maxlength="11" placeholder="e.g. 25101281462" type="text" required/>
+          <button class="absolute right-2 px-3 py-1.5 rounded-xl font-label-md text-label-md font-medium text-text-primary bg-black/5 hover:bg-black/10 active:scale-95 transition-all border border-black/5 specular-top-edge" id="signin-otp-btn" onclick="triggerOtp('signin')" type="button">
+            Send OTP
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex justify-between items-baseline mb-1.5">
+          <label class="font-label-md text-label-md text-text-primary" for="signin-otp">Verification Code</label>
+          <span class="font-body-sm text-body-sm text-text-tertiary">Sent to registered Gmail</span>
+        </div>
+        <input class="w-full h-12 px-4 rounded-2xl bg-input-surface border border-input-border font-mono-input text-center text-mono-input tracking-[0.6em] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition-all" id="signin-otp" inputmode="numeric" maxlength="6" placeholder="······" type="text" required/>
+      </div>
+
+      <button class="w-full h-12 mt-2 rounded-2xl bg-[#111111] text-white font-label-md text-label-md font-medium shadow-sm hover:bg-black active:scale-[0.98] transition-all flex items-center justify-center gap-2 border-t border-white/20" type="submit">
+        <span>Continue</span>
+        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+      </button>
+    </form>
+
+    <!-- VIEW 2: CREATE ACCOUNT -->
+    <form class="space-y-4 hidden" id="view-signup" onsubmit="handleSignUp(event)">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-label-md text-label-md text-text-primary mb-1.5" for="signup-studentid">Student ID (11 Digits)</label>
+          <input class="w-full h-11 px-3.5 rounded-2xl bg-input-surface border border-input-border font-mono-input text-[14px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition-all" id="signup-studentid" inputmode="numeric" maxlength="11" placeholder="25101281462" type="text" required/>
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-text-primary mb-1.5" for="signup-phone">Mobile Number (10 Digits)</label>
+          <input class="w-full h-11 px-3.5 rounded-2xl bg-input-surface border border-input-border font-mono-input text-[14px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition-all" id="signup-phone" inputmode="numeric" maxlength="10" placeholder="9876543210" type="text" required/>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-label-md text-label-md text-text-primary mb-1.5" for="signup-name">Full Name</label>
+          <input class="w-full h-11 px-3.5 rounded-2xl bg-input-surface border border-input-border font-body-md text-body-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition-all" id="signup-name" placeholder="Full Name" type="text" required/>
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-text-primary mb-1.5" for="signup-roll">Roll Number</label>
+          <input class="w-full h-11 px-3.5 rounded-2xl bg-input-surface border border-input-border font-mono-input text-[13px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition-all" id="signup-roll" placeholder="2519549" type="text" required/>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <div class="sm:col-span-6">
+          <label class="block font-label-md text-label-md text-text-primary mb-1.5" for="signup-course">Course</label>
+          <input class="w-full h-11 px-3.5 rounded-2xl bg-input-surface border border-input-border font-body-md text-body-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition-all" id="signup-course" placeholder="B.Tech CSE" type="text" required/>
+        </div>
+        <div class="sm:col-span-3">
+          <label class="block font-label-md text-label-md text-text-primary mb-1.5" for="signup-year">Year</label>
+          <select class="w-full h-11 px-2.5 rounded-2xl bg-input-surface border border-input-border font-body-sm text-body-sm text-text-primary focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition-all cursor-pointer" id="signup-year">
+            <option value="1">Year 1</option>
+            <option value="2" selected>Year 2</option>
+            <option value="3">Year 3</option>
+            <option value="4">Year 4</option>
+          </select>
+        </div>
+        <div class="sm:col-span-3">
+          <label class="block font-label-md text-label-md text-text-primary mb-1.5" for="signup-blood">Blood</label>
+          <select class="w-full h-11 px-2.5 rounded-2xl bg-input-surface border border-input-border font-mono-label text-mono-label text-text-primary focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition-all cursor-pointer" id="signup-blood">
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-label-md text-label-md text-text-primary mb-1.5" for="signup-email">Personal Gmail</label>
+        <div class="relative flex items-center">
+          <input class="w-full h-11 pl-3.5 pr-24 rounded-2xl bg-input-surface border border-input-border font-body-md text-body-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition-all" id="signup-email" placeholder="you@gmail.com" type="email" required/>
+          <button class="absolute right-2 px-2.5 py-1.5 rounded-xl font-label-md text-label-md font-medium text-text-primary bg-black/5 hover:bg-black/10 active:scale-95 transition-all border border-black/5 specular-top-edge" id="signup-otp-btn" onclick="triggerOtp('signup')" type="button">
+            Send OTP
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex justify-between items-baseline mb-1.5">
+          <label class="font-label-md text-label-md text-text-primary" for="signup-otp">Gmail Verification Code</label>
+          <span class="inline-flex items-center gap-1 font-mono-label text-mono-label text-text-tertiary" id="signup-status-badge">
+            <span class="w-1.5 h-1.5 rounded-full bg-text-tertiary"></span> Unverified
+          </span>
+        </div>
+        <input class="w-full h-11 px-4 rounded-2xl bg-input-surface border border-input-border font-mono-input text-center text-mono-input tracking-[0.5em] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 transition-all" id="signup-otp" inputmode="numeric" maxlength="6" oninput="checkOtpVerified(this.value)" placeholder="······" type="text" required/>
+      </div>
+
+      <button class="w-full h-12 mt-2 rounded-2xl bg-[#111111] text-white font-label-md text-label-md font-medium shadow-sm hover:bg-black active:scale-[0.98] transition-all flex items-center justify-center gap-2 border-t border-white/20" type="submit">
+        <span>Create Account</span>
+        <span class="material-symbols-outlined text-[16px]">check_circle</span>
+      </button>
+    </form>
+
+    <div class="mt-8 pt-5 border-t border-glass-border flex items-center justify-center gap-2">
+      <span class="material-symbols-outlined text-text-tertiary text-[14px]">verified_user</span>
+      <p class="font-mono-label text-mono-label text-text-tertiary tracking-normal text-center">
+        Protected by campus verification protocols • EcoTrade
+      </p>
+    </div>
+  </div>
+</main>
+
+<script>
+  const API = "/api";
+
+  if (localStorage.getItem("ecotrade_user")) {
+    window.location.href = "dashboard.html";
+  }
+
+  function showAlert(msg, isError = false) {
+    const el = document.getElementById("auth-alert");
+    el.className = isError
+      ? "mb-5 px-4 py-2.5 rounded-2xl text-body-sm font-medium border bg-red-500/10 border-red-500/25 text-red-700"
+      : "mb-5 px-4 py-2.5 rounded-2xl text-body-sm font-medium border bg-emerald-500/10 border-emerald-500/25 text-emerald-800";
+    el.textContent = msg;
+    el.classList.remove("hidden");
+  }
+
+  function switchView(view) {
+    document.getElementById("auth-alert").classList.add("hidden");
+    const signinView = document.getElementById('view-signin');
+    const signupView = document.getElementById('view-signup');
+    const signinTab = document.getElementById('tab-signin');
+    const signupTab = document.getElementById('tab-signup');
+    const subtitle = document.getElementById('portal-subtitle');
+
+    if (view === 'signin') {
+      signinView.classList.remove('hidden');
+      signupView.classList.add('hidden');
+      signinTab.className = 'tab-spring flex-1 py-1.5 px-4 rounded-full font-label-md text-label-md font-medium text-text-primary bg-white shadow-sm text-center focus:outline-none';
+      signupTab.className = 'tab-spring flex-1 py-1.5 px-4 rounded-full font-label-md text-label-md font-medium text-text-secondary hover:text-text-primary text-center focus:outline-none';
+      subtitle.textContent = 'Sign in with Student ID';
+    } else {
+      signupView.classList.remove('hidden');
+      signinView.classList.add('hidden');
+      signupTab.className = 'tab-spring flex-1 py-1.5 px-4 rounded-full font-label-md text-label-md font-medium text-text-primary bg-white shadow-sm text-center focus:outline-none';
+      signinTab.className = 'tab-spring flex-1 py-1.5 px-4 rounded-full font-label-md text-label-md font-medium text-text-secondary hover:text-text-primary text-center focus:outline-none';
+      subtitle.textContent = 'Register your student credentials';
+    }
+  }
+
+  async function triggerOtp(context) {
+    const idVal = document.getElementById(context === 'signin' ? 'signin-studentid' : 'signup-studentid').value.trim();
+    const emailVal = context === 'signup' ? document.getElementById('signup-email').value.trim() : "";
+
+    if (idVal.length !== 11 || isNaN(idVal)) {
+      return showAlert("Please enter a valid 11-digit Student ID.", true);
+    }
+    if (context === 'signup' && !emailVal.includes('@')) {
+      return showAlert("Please enter a valid personal Gmail address.", true);
+    }
+
+    const btn = document.getElementById(context === 'signin' ? 'signin-otp-btn' : 'signup-otp-btn');
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`${API}/auth/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId: Number(idVal), email: emailVal })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Failed to send OTP");
+
+      btn.textContent = 'Sent ✓';
+      btn.classList.add('bg-black/10', 'text-emerald-700');
+      showAlert(`6-digit OTP sent to ${data.email}`);
+    } catch (err) {
+      btn.textContent = 'Send OTP';
+      showAlert(err.message, true);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function checkOtpVerified(val) {
+    const badge = document.getElementById('signup-status-badge');
+    if (val.length === 6) {
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> <span class="text-emerald-700 font-semibold">6 Digits Ready</span>';
+    } else {
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-text-tertiary"></span> Unverified';
+    }
+  }
+
+  async function handleSignIn(e) {
+    e.preventDefault();
+    const idVal = document.getElementById('signin-studentid').value.trim();
+    const otpVal = document.getElementById('signin-otp').value.trim();
+
+    try {
+      const res = await fetch(`${API}/auth/verify-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId: Number(idVal), otp: Number(otpVal) })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Invalid OTP");
+
+      localStorage.setItem("ecotrade_user", JSON.stringify(data.student));
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      showAlert(err.message, true);
+    }
+  }
+
+  async function handleSignUp(e) {
+    e.preventDefault();
+    const phoneVal = document.getElementById('signup-phone').value.trim();
+    if (phoneVal.length !== 10 || isNaN(phoneVal)) {
+      return showAlert("Please enter a valid 10-digit Mobile Number.", true);
+    }
+
+    const payload = {
+      studentId: Number(document.getElementById('signup-studentid').value.trim()),
+      phone: phoneVal,
+      name: document.getElementById('signup-name').value.trim(),
+      rollNo: document.getElementById('signup-roll').value.trim(),
+      course: document.getElementById('signup-course').value.trim(),
+      year: Number(document.getElementById('signup-year').value),
+      bloodGroup: document.getElementById('signup-blood').value,
+      email: document.getElementById('signup-email').value.trim(),
+      otp: Number(document.getElementById('signup-otp').value.trim())
+    };
+
+    try {
+      const res = await fetch(`${API}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Registration failed");
+
+      localStorage.setItem("ecotrade_user", JSON.stringify(data.student));
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      showAlert(err.message, true);
+    }
+  }
+</script>
+</body></html>
