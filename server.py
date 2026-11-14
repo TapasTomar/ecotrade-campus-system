@@ -42,7 +42,6 @@ def find_user_in_db(cur, sid: str):
     if row:
         return row
 
-    # Fallback: check yesterday's 'students' table if it exists and auto-sync
     try:
         cur.execute(
             "SELECT student_id, name, email, mobile, blood_group FROM students WHERE student_id=%s",
@@ -64,7 +63,7 @@ def find_user_in_db(cur, sid: str):
     return None
 
 
-# --- Frontend HTML Pages (Serves Your Exact Original UI) ---
+# --- Frontend HTML Pages ---
 @app.get("/")
 @app.get("/login")
 @app.get("/login.html")
@@ -84,7 +83,7 @@ def cpp_status():
     return {"status": parts[0], "engine": parts[1]}
 
 
-# --- Universal OTP Route (Handles Sign In Student ID & Create Account Email) ---
+# --- Universal OTP Route ---
 @app.post("/api/auth/send-otp")
 @app.post("/api/send-otp")
 async def send_otp(request: Request):
@@ -119,10 +118,16 @@ async def send_otp(request: Request):
 
     if not send_mail(email, "EcoTrade Campus - Verification OTP", f"Your EcoTrade OTP is: {otp}\nValid for 10 minutes."):
         raise HTTPException(status_code=500, detail="Failed to send OTP email")
-    return {"message": f"OTP sent to {email}"}
+
+    return {
+        "message": f"OTP sent to {email}",
+        "email": email,
+        "masked_email": email,
+        "to": email
+    }
 
 
-# --- Universal Create Account Route (Executed by C++ student.h) ---
+# --- Universal Create Account Route (C++ student.h) ---
 @app.post("/api/auth/signup")
 @app.post("/api/auth/register")
 @app.post("/api/register")
@@ -175,7 +180,7 @@ async def signup(request: Request):
         conn.close()
 
 
-# --- Universal Sign In Route (Executed by C++ student.h) ---
+# --- Universal Sign In Route (C++ student.h) ---
 @app.post("/api/auth/login")
 @app.post("/api/login")
 @app.post("/login")
@@ -208,7 +213,7 @@ async def login(request: Request):
         conn.close()
 
 
-# --- Barter Marketplace Routes (Executed by C++ Barter.h) ---
+# --- Barter Marketplace Routes (C++ Barter.h) ---
 @app.get("/api/items")
 def get_items(viewer_id: str = ""):
     conn = db.get_connection()
@@ -404,7 +409,7 @@ async def complete_handshake(request: Request):
         conn.close()
 
 
-# --- Blood Bank Routes (Executed by C++ blooddonate.h) ---
+# --- Blood Bank Routes (C++ blooddonate.h) ---
 @app.get("/api/blood/stock")
 def get_blood_stock():
     conn = db.get_connection()
