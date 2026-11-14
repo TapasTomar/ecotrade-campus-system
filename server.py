@@ -73,11 +73,14 @@ class BloodRequestModel(BaseModel):
     urgency: int = 1
 
 
+# --- Frontend HTML Routes ---
 @app.get("/")
+@app.get("/login.html")
 def serve_login():
     return FileResponse("login.html")
 
 @app.get("/dashboard")
+@app.get("/dashboard.html")
 def serve_dashboard():
     return FileResponse("dashboard.html")
 
@@ -87,6 +90,7 @@ def cpp_status():
     return {"status": parts[0], "engine": parts[1]}
 
 
+# --- Auth Routes (Executed by C++ student.h) ---
 @app.post("/api/auth/send-otp")
 def send_otp(req: OtpRequest):
     otp = str(random.randint(100000, 999999))
@@ -153,6 +157,7 @@ def login(req: LoginRequest):
         conn.close()
 
 
+# --- Barter Routes (Executed by C++ Barter.h) ---
 @app.get("/api/items")
 def get_items(viewer_id: str = ""):
     conn = db.get_connection()
@@ -276,6 +281,7 @@ def accept_offer(req: AcceptOfferRequest):
         conn.close()
 
 
+# --- Blood Bank Priority Queue Route (Executed by C++ blooddonate.h) ---
 @app.post("/api/blood/dispatch")
 def dispatch_blood(req: BloodRequestModel):
     conn = db.get_connection()
