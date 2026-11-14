@@ -33,36 +33,6 @@ def call_cpp(*args) -> list[str]:
         raise HTTPException(status_code=500, detail=f"C++ Backend Error: {str(e)}")
 
 
-def find_user_in_db(cur, sid: str):
-    cur.execute(
-        "SELECT student_id, name, email, mobile, blood_group FROM users WHERE student_id=%s",
-        (sid,)
-    )
-    row = cur.fetchone()
-    if row:
-        return row
-
-    try:
-        cur.execute(
-            "SELECT student_id, name, email, mobile, blood_group FROM students WHERE student_id=%s",
-            (sid,)
-        )
-        row = cur.fetchone()
-        if row:
-            cur.execute(
-                """
-                INSERT INTO users (student_id, name, email, mobile, blood_group, password)
-                VALUES (%s, %s, %s, %s, %s, '1234')
-                ON CONFLICT (student_id) DO NOTHING
-                """,
-                row
-            )
-            return row
-    except Exception:
-        pass
-    return None
-
-
 # --- Frontend HTML Pages ---
 @app.get("/")
 @app.get("/login")
@@ -83,7 +53,7 @@ def cpp_status():
     return {"status": parts[0], "engine": parts[1]}
 
 
-# --- Universal OTP Route ---
+# --- Universal Send OTP Route ---
 @app.post("/api/auth/send-otp")
 @app.post("/api/send-otp")
 async def send_otp(request: Request):
@@ -99,11 +69,11 @@ async def send_otp(request: Request):
         conn = db.get_connection()
         cur = conn.cursor()
         try:
-            user = find_user_in_db(cur, sid)
-            conn.commit()
-            if not user:
-                raise HTTPException(status_code=404, detail="Student ID not registered")
-            email = user[2].strip().lower()
+            cur.execute("SELECT email FROM users WHERE student_id=%s", (sid,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Student ID not registered. Please Create Account first.")
+            email = row[0].strip().lower()
         finally:
             cur.close()
             conn.close()
@@ -127,9 +97,11 @@ async def send_otp(request: Request):
     }
 
 
-# --- Universal Create Account Route (C++ student.h) ---
+# --- Universal Create Account Route (C++ student.h + Neon DB) ---
 @app.post("/api/auth/signup")
 @app.post("/api/auth/register")
+@app.post("/api/auth/create-account")
+@app.post("/api/signup")
 @app.post("/api/register")
 @app.post("/register")
 async def signup(request: Request):
@@ -180,9 +152,14 @@ async def signup(request: Request):
         conn.close()
 
 
-# --- Universal Sign In Route (C++ student.h) ---
+# --- Universal Sign In / Verify OTP Route (C++ student.h + Neon DB) ---
 @app.post("/api/auth/login")
+@app.post("/api/auth/signin")
+@app.post("/api/auth/verify-otp")
+@app.post("/api/auth/verify")
 @app.post("/api/login")
+@app.post("/api/signin")
+@app.post("/api/verify-otp")
 @app.post("/login")
 async def login(request: Request):
     data = await request.json()
@@ -196,8 +173,11 @@ async def login(request: Request):
     conn = db.get_connection()
     cur = conn.cursor()
     try:
-        user = find_user_in_db(cur, sid)
-        conn.commit()
+        cur.execute(
+            "SELECT student_id, name, email, mobile, blood_group, roll_number, course, year FROM users WHERE student_id=%s",
+            (sid,)
+        )
+        user = cur.fetchone()
         if not user:
             raise HTTPException(status_code=401, detail="Student ID not registered")
         otp_store.pop(sid, None)
@@ -206,14 +186,17 @@ async def login(request: Request):
             "name": user[1],
             "email": user[2],
             "mobile": user[3],
-            "blood_group": user[4]
+            "blood_group": user[4],
+            "roll_number": user[5],
+            "course": user[6],
+            "year": user[7]
         }
     finally:
         cur.close()
         conn.close()
 
 
-# --- Barter Marketplace Routes (C++ Barter.h) ---
+# --- Barter Marketplace Routes (C++ Barter.h + Neon DB) ---
 @app.get("/api/items")
 def get_items(viewer_id: str = ""):
     conn = db.get_connection()
@@ -409,7 +392,7 @@ async def complete_handshake(request: Request):
         conn.close()
 
 
-# --- Blood Bank Routes (C++ blooddonate.h) ---
+# --- Blood Bank Routes (C++ blooddonate.h + Neon DB) ---
 @app.get("/api/blood/stock")
 def get_blood_stock():
     conn = db.get_connection()
