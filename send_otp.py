@@ -4,13 +4,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MY_EMAIL = os.getenv("MY_EMAIL", "").strip()
-BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
+MY_EMAIL = os.getenv("MY_EMAIL")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+
 
 def send_mail(to_email: str, subject: str, body: str) -> bool:
     if not MY_EMAIL or not BREVO_API_KEY:
         print("Mail Error: MY_EMAIL or BREVO_API_KEY not set.")
         return False
+
     try:
         res = requests.post(
             "https://api.brevo.com/v3/smtp/email",
