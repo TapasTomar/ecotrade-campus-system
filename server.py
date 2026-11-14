@@ -36,6 +36,7 @@ def call_cpp(*args) -> list[str]:
 
 class OtpRequest(BaseModel):
     email: str = ""
+    student_id: str = ""
 
 class SignupRequest(BaseModel):
     student_id: str
@@ -49,6 +50,7 @@ class SignupRequest(BaseModel):
 class LoginRequest(BaseModel):
     student_id: str
     password: str
+    otp: str = ""
 
 class ItemRequest(BaseModel):
     owner_id: str
@@ -94,19 +96,38 @@ def cpp_status():
 @app.post("/api/auth/send-otp")
 def send_otp(req: OtpRequest):
     email = req.email.strip()
+    sid = req.student_id.strip()
+
+    # Login tab se student_id aayi hai toh DB se registered email nikalo
+    if not email and sid:
+        conn = db.get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT email FROM users WHERE student_id=%s", (sid,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Student ID not registered")
+            email = row[0]
+        finally:
+            cur.close()
+            conn.close()
+
     if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="Please enter a valid email address first")
+        raise HTTPException(status_code=400, detail="Please enter a valid Student ID or Email")
 
     otp = str(random.randint(100000, 999999))
     otp_store[email] = otp
+    if sid:
+        otp_store[sid] = otp
+
     sent = send_mail(
         email,
         "EcoTrade Campus - Verification OTP",
-        f"Your EcoTrade verification OTP is: {otp}\nValid for 10 minutes."
+        f"Your EcoTrade OTP is: {otp}\nValid for 10 minutes."
     )
     if not sent:
         raise HTTPException(status_code=500, detail="Failed to send OTP email")
-    return {"message": "OTP sent successfully"}
+    return {"message": f"OTP sent to {email}"}
 
 
 @app.post("/api/auth/signup")
@@ -140,6 +161,12 @@ def signup(req: SignupRequest):
 def login(req: LoginRequest):
     call_cpp("LOGIN", req.student_id, req.password)
 
+    # Agar login form mein OTP bhari gayi hai toh verify karo
+    if req.otp.strip():
+        saved_otp = otp_store.get(req.student_id.strip(), "")
+        if req.otp.strip() != saved_otp:
+            raise HTTPException(status_code=400, detail="Wrong OTP entered")
+
     conn = db.get_connection()
     cur = conn.cursor()
     try:
@@ -150,6 +177,7 @@ def login(req: LoginRequest):
         user = cur.fetchone()
         if not user:
             raise HTTPException(status_code=401, detail="Invalid Student ID or Password")
+        otp_store.pop(req.student_id.strip(), None)
         return {
             "student_id": user[0],
             "name": user[1],
