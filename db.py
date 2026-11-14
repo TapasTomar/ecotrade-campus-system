@@ -24,9 +24,16 @@ def init_db():
             email VARCHAR(120) UNIQUE NOT NULL,
             mobile VARCHAR(15) NOT NULL,
             blood_group VARCHAR(10) DEFAULT 'O+',
-            password VARCHAR(100) NOT NULL
+            password VARCHAR(100) DEFAULT '1234',
+            roll_number VARCHAR(30) DEFAULT '',
+            course VARCHAR(100) DEFAULT '',
+            year VARCHAR(30) DEFAULT ''
         );
     """)
+
+    cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS roll_number VARCHAR(30) DEFAULT '';")
+    cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS course VARCHAR(100) DEFAULT '';")
+    cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS year VARCHAR(30) DEFAULT '';")
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS items (

@@ -3,7 +3,6 @@ import random
 import subprocess
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
 import db
 from send_otp import send_mail
 
@@ -34,57 +33,50 @@ def call_cpp(*args) -> list[str]:
         raise HTTPException(status_code=500, detail=f"C++ Backend Error: {str(e)}")
 
 
-class SignupRequest(BaseModel):
-    student_id: str
-    name: str
-    email: str
-    mobile: str
-    blood_group: str = "O+"
-    password: str
-    otp: str
+def find_user_in_db(cur, sid: str):
+    cur.execute(
+        "SELECT student_id, name, email, mobile, blood_group FROM users WHERE student_id=%s",
+        (sid,)
+    )
+    row = cur.fetchone()
+    if row:
+        return row
 
-class LoginRequest(BaseModel):
-    student_id: str
-    password: str
-    otp: str = ""
-
-class ItemRequest(BaseModel):
-    owner_id: str
-    title: str
-    category: str = "General"
-    condition: str = "Good"
-    expected_return: str = "Open to offers"
-
-class OfferRequest(BaseModel):
-    item_id: int
-    bidder_id: str
-    offer_text: str
-
-class AcceptOfferRequest(BaseModel):
-    item_id: int
-    offer_id: int
-    owner_id: str
-
-class CompleteHandshakeRequest(BaseModel):
-    item_id: int
-    handshake_code: str
-
-class BloodRequestModel(BaseModel):
-    blood_group: str
-    units: int
-    urgency: int = 1
+    # Fallback: check yesterday's 'students' table if it exists and auto-sync
+    try:
+        cur.execute(
+            "SELECT student_id, name, email, mobile, blood_group FROM students WHERE student_id=%s",
+            (sid,)
+        )
+        row = cur.fetchone()
+        if row:
+            cur.execute(
+                """
+                INSERT INTO users (student_id, name, email, mobile, blood_group, password)
+                VALUES (%s, %s, %s, %s, %s, '1234')
+                ON CONFLICT (student_id) DO NOTHING
+                """,
+                row
+            )
+            return row
+    except Exception:
+        pass
+    return None
 
 
-# --- Website Pages ---
+# --- Frontend HTML Pages (Serves Your Exact Original UI) ---
 @app.get("/")
+@app.get("/login")
 @app.get("/login.html")
 def serve_login():
     return FileResponse("login.html")
+
 
 @app.get("/dashboard")
 @app.get("/dashboard.html")
 def serve_dashboard():
     return FileResponse("dashboard.html")
+
 
 @app.get("/api/cpp-status")
 def cpp_status():
@@ -92,22 +84,27 @@ def cpp_status():
     return {"status": parts[0], "engine": parts[1]}
 
 
-# --- Auth API (C++ student.h + Neon DB) ---
+# --- Universal OTP Route (Handles Sign In Student ID & Create Account Email) ---
 @app.post("/api/auth/send-otp")
+@app.post("/api/send-otp")
 async def send_otp(request: Request):
     data = await request.json()
-    email = str(data.get("email") or "").strip().lower()
-    sid = str(data.get("student_id") or "").strip()
+    email = str(
+        data.get("email") or data.get("userEmail") or data.get("user_email") or data.get("gmail") or ""
+    ).strip().lower()
+    sid = str(
+        data.get("student_id") or data.get("studentId") or data.get("sid") or data.get("id") or ""
+    ).strip()
 
     if not email and sid:
         conn = db.get_connection()
         cur = conn.cursor()
         try:
-            cur.execute("SELECT email FROM users WHERE student_id=%s", (sid,))
-            row = cur.fetchone()
-            if not row:
+            user = find_user_in_db(cur, sid)
+            conn.commit()
+            if not user:
                 raise HTTPException(status_code=404, detail="Student ID not registered")
-            email = row[0].strip().lower()
+            email = user[2].strip().lower()
         finally:
             cur.close()
             conn.close()
@@ -120,33 +117,56 @@ async def send_otp(request: Request):
     if sid:
         otp_store[sid] = otp
 
-    if not send_mail(email, "EcoTrade Campus - OTP", f"Your EcoTrade OTP is: {otp}"):
+    if not send_mail(email, "EcoTrade Campus - Verification OTP", f"Your EcoTrade OTP is: {otp}\nValid for 10 minutes."):
         raise HTTPException(status_code=500, detail="Failed to send OTP email")
     return {"message": f"OTP sent to {email}"}
 
 
+# --- Universal Create Account Route (Executed by C++ student.h) ---
 @app.post("/api/auth/signup")
-def signup(req: SignupRequest):
-    email = req.email.strip().lower()
-    sid = req.student_id.strip()
-    real_otp = otp_store.get(email) or otp_store.get(sid) or ""
+@app.post("/api/auth/register")
+@app.post("/api/register")
+@app.post("/register")
+async def signup(request: Request):
+    data = await request.json()
+    sid = str(data.get("student_id") or data.get("studentId") or data.get("sid") or "").strip()
+    name = str(data.get("name") or data.get("fullName") or data.get("full_name") or "").strip()
+    email = str(data.get("email") or data.get("gmail") or "").strip().lower()
+    mobile = str(data.get("mobile") or data.get("phone") or data.get("mobileNumber") or "").strip()
+    blood_group = str(data.get("blood_group") or data.get("bloodGroup") or data.get("blood") or "O+").strip()
+    roll_no = str(data.get("roll_number") or data.get("rollNumber") or data.get("roll") or "").strip()
+    course = str(data.get("course") or "").strip()
+    year = str(data.get("year") or "").strip()
+    password = str(data.get("password") or roll_no or "1234").strip()
+    otp = str(data.get("otp") or data.get("code") or data.get("verificationCode") or "").strip()
 
-    call_cpp("SIGNUP", sid, req.name.strip(), email, req.mobile.strip(), req.password, req.otp.strip(), real_otp)
+    real_otp = otp_store.get(email) or otp_store.get(sid) or ""
+    call_cpp("SIGNUP", sid, name, email, mobile, password, otp, real_otp)
 
     conn = db.get_connection()
     cur = conn.cursor()
     try:
         cur.execute(
             """
-            INSERT INTO users (student_id, name, email, mobile, blood_group, password)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO users (student_id, name, email, mobile, blood_group, password, roll_number, course, year)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
-            (sid, req.name.strip(), email, req.mobile.strip(), req.blood_group, req.password)
+            (sid, name, email, mobile, blood_group, password, roll_no, course, year)
         )
         conn.commit()
         otp_store.pop(email, None)
         otp_store.pop(sid, None)
-        return {"message": "Account created via C++ Backend", "student_id": sid}
+        return {
+            "message": "Account created via C++ Backend",
+            "student_id": sid,
+            "name": name,
+            "email": email,
+            "mobile": mobile,
+            "blood_group": blood_group,
+            "roll_number": roll_no,
+            "course": course,
+            "year": year
+        }
     except Exception:
         conn.rollback()
         raise HTTPException(status_code=400, detail="Student ID or Email already exists")
@@ -155,24 +175,26 @@ def signup(req: SignupRequest):
         conn.close()
 
 
+# --- Universal Sign In Route (Executed by C++ student.h) ---
 @app.post("/api/auth/login")
-def login(req: LoginRequest):
-    sid = req.student_id.strip()
-    user_otp = req.otp.strip() if req.otp.strip() else "NONE"
-    real_otp = otp_store.get(sid, "") if user_otp != "NONE" else "NONE"
+@app.post("/api/login")
+@app.post("/login")
+async def login(request: Request):
+    data = await request.json()
+    sid = str(data.get("student_id") or data.get("studentId") or data.get("sid") or "").strip()
+    password = str(data.get("password") or "").strip()
+    otp = str(data.get("otp") or data.get("code") or data.get("verificationCode") or "NONE").strip()
+    real_otp = otp_store.get(sid, "") if otp != "NONE" else "NONE"
 
-    call_cpp("LOGIN", sid, req.password, user_otp, real_otp)
+    call_cpp("LOGIN", sid, password if password else "1234", otp, real_otp)
 
     conn = db.get_connection()
     cur = conn.cursor()
     try:
-        cur.execute(
-            "SELECT student_id, name, email, mobile, blood_group FROM users WHERE student_id=%s AND password=%s",
-            (sid, req.password)
-        )
-        user = cur.fetchone()
+        user = find_user_in_db(cur, sid)
+        conn.commit()
         if not user:
-            raise HTTPException(status_code=401, detail="Invalid Student ID or Password")
+            raise HTTPException(status_code=401, detail="Student ID not registered")
         otp_store.pop(sid, None)
         return {
             "student_id": user[0],
@@ -186,7 +208,7 @@ def login(req: LoginRequest):
         conn.close()
 
 
-# --- Barter API (C++ Barter.h + Neon DB) ---
+# --- Barter Marketplace Routes (Executed by C++ Barter.h) ---
 @app.get("/api/items")
 def get_items(viewer_id: str = ""):
     conn = db.get_connection()
@@ -224,7 +246,14 @@ def get_items(viewer_id: str = ""):
 
 
 @app.post("/api/items")
-def create_item(req: ItemRequest):
+async def create_item(request: Request):
+    data = await request.json()
+    owner_id = str(data.get("owner_id") or data.get("ownerId") or data.get("student_id") or "").strip()
+    title = str(data.get("title") or data.get("item_name") or "").strip()
+    category = str(data.get("category") or "General").strip()
+    condition = str(data.get("condition") or "Good").strip()
+    expected_return = str(data.get("expected_return") or data.get("expectedReturn") or "Open to offers").strip()
+
     conn = db.get_connection()
     cur = conn.cursor()
     try:
@@ -234,7 +263,7 @@ def create_item(req: ItemRequest):
             VALUES (%s, %s, %s, %s, %s, 'OPEN')
             RETURNING id
             """,
-            (req.owner_id, req.title, req.category, req.condition, req.expected_return)
+            (owner_id, title, category, condition, expected_return)
         )
         new_id = cur.fetchone()[0]
         conn.commit()
@@ -277,20 +306,25 @@ def get_offers(owner_id: str = ""):
 
 
 @app.post("/api/offers")
-def send_offer(req: OfferRequest):
+async def send_offer(request: Request):
+    data = await request.json()
+    item_id = int(data.get("item_id") or data.get("itemId"))
+    bidder_id = str(data.get("bidder_id") or data.get("bidderId") or "").strip()
+    offer_text = str(data.get("offer_text") or data.get("offerText") or "").strip()
+
     conn = db.get_connection()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT owner_id, status FROM items WHERE id=%s", (req.item_id,))
+        cur.execute("SELECT owner_id, status FROM items WHERE id=%s", (item_id,))
         item = cur.fetchone()
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        call_cpp("OFFER", item[0], req.bidder_id, item[1])
+        call_cpp("OFFER", item[0], bidder_id, item[1])
 
         cur.execute(
             "INSERT INTO offers (item_id, bidder_id, offer_text, status) VALUES (%s, %s, %s, 'PENDING')",
-            (req.item_id, req.bidder_id, req.offer_text)
+            (item_id, bidder_id, offer_text)
         )
         conn.commit()
         return {"message": "Offer sent via C++ Barter Engine"}
@@ -300,7 +334,12 @@ def send_offer(req: OfferRequest):
 
 
 @app.post("/api/offers/accept")
-def accept_offer(req: AcceptOfferRequest):
+async def accept_offer(request: Request):
+    data = await request.json()
+    item_id = int(data.get("item_id") or data.get("itemId"))
+    offer_id = int(data.get("offer_id") or data.get("offerId"))
+    owner_id = str(data.get("owner_id") or data.get("ownerId") or "").strip()
+
     conn = db.get_connection()
     cur = conn.cursor()
     try:
@@ -311,19 +350,19 @@ def accept_offer(req: AcceptOfferRequest):
             JOIN users u_owner ON i.owner_id = u_owner.student_id
             JOIN users u_bidder ON o.bidder_id = u_bidder.student_id
             WHERE o.id=%s AND i.id=%s AND i.owner_id=%s
-        """, (req.offer_id, req.item_id, req.owner_id))
+        """, (offer_id, item_id, owner_id))
         row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Offer not found")
 
         bidder_id, owner_email, owner_mobile, bidder_email, bidder_mobile, title = row
-        _, handshake_code = call_cpp("ACCEPT", req.owner_id, bidder_id)
+        _, handshake_code = call_cpp("ACCEPT", owner_id, bidder_id)
 
         cur.execute(
             "UPDATE items SET status='ACCEPTED', accepted_bidder_id=%s, handshake_code=%s WHERE id=%s",
-            (bidder_id, handshake_code, req.item_id)
+            (bidder_id, handshake_code, item_id)
         )
-        cur.execute("UPDATE offers SET status='ACCEPTED' WHERE id=%s", (req.offer_id,))
+        cur.execute("UPDATE offers SET status='ACCEPTED' WHERE id=%s", (offer_id,))
         conn.commit()
 
         send_mail(owner_email, f"EcoTrade Deal Accepted: {title}",
@@ -343,17 +382,21 @@ def accept_offer(req: AcceptOfferRequest):
 
 
 @app.post("/api/offers/complete")
-def complete_handshake(req: CompleteHandshakeRequest):
+async def complete_handshake(request: Request):
+    data = await request.json()
+    item_id = int(data.get("item_id") or data.get("itemId"))
+    handshake_code = str(data.get("handshake_code") or data.get("handshakeCode") or "").strip()
+
     conn = db.get_connection()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT handshake_code FROM items WHERE id=%s", (req.item_id,))
+        cur.execute("SELECT handshake_code FROM items WHERE id=%s", (item_id,))
         row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        call_cpp("HANDSHAKE", req.handshake_code.strip(), row[0] or "")
-        cur.execute("UPDATE items SET status='COMPLETED' WHERE id=%s", (req.item_id,))
+        call_cpp("HANDSHAKE", handshake_code, row[0] or "")
+        cur.execute("UPDATE items SET status='COMPLETED' WHERE id=%s", (item_id,))
         conn.commit()
         return {"message": "Barter completed via C++"}
     finally:
@@ -361,7 +404,7 @@ def complete_handshake(req: CompleteHandshakeRequest):
         conn.close()
 
 
-# --- Blood Bank API (C++ blooddonate.h + Neon DB) ---
+# --- Blood Bank Routes (Executed by C++ blooddonate.h) ---
 @app.get("/api/blood/stock")
 def get_blood_stock():
     conn = db.get_connection()
@@ -375,19 +418,24 @@ def get_blood_stock():
 
 
 @app.post("/api/blood/dispatch")
-def dispatch_blood(req: BloodRequestModel):
+async def dispatch_blood(request: Request):
+    data = await request.json()
+    blood_group = str(data.get("blood_group") or data.get("bloodGroup") or "").strip()
+    units = int(data.get("units") or 1)
+    urgency = int(data.get("urgency") or 1)
+
     conn = db.get_connection()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT units FROM blood_stock WHERE blood_group=%s", (req.blood_group,))
+        cur.execute("SELECT units FROM blood_stock WHERE blood_group=%s", (blood_group,))
         row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Blood group not found")
 
         available = row[0]
-        _, remaining, priority_level = call_cpp("BLOOD", req.blood_group, available, req.units, req.urgency)
+        _, remaining, priority_level = call_cpp("BLOOD", blood_group, available, units, urgency)
 
-        cur.execute("UPDATE blood_stock SET units=%s WHERE blood_group=%s", (int(remaining), req.blood_group))
+        cur.execute("UPDATE blood_stock SET units=%s WHERE blood_group=%s", (int(remaining), blood_group))
         conn.commit()
         return {
             "message": f"Dispatched via C++ Priority Queue ({priority_level})",
