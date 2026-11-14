@@ -8,17 +8,12 @@ using namespace std;
 
 class Student {
 private:
-    string studentId;
-    string name;
-    string email;
-    string mobile;
-
-    bool checkNumber(string str, int length) {
-        if ((int)str.length() != length) {
+    bool isDigits(string text, int exactLen) {
+        if ((int)text.length() != exactLen) {
             return false;
         }
-        for (int i = 0; i < length; i++) {
-            if (str[i] < '0' || str[i] > '9') {
+        for (int i = 0; i < exactLen; i++) {
+            if (text[i] < '0' || text[i] > '9') {
                 return false;
             }
         }
@@ -26,49 +21,39 @@ private:
     }
 
 public:
-    Student() {
-        studentId = "";
-        name = "";
-        email = "";
-        mobile = "";
-    }
+    Student() {}
 
-    Student(string id, string n, string e, string m) {
-        studentId = id;
-        name = n;
-        email = e;
-        mobile = m;
-    }
-
-    string checkSignup(string id, string n, string e, string m, string pass, string userOtp, string realOtp) {
-        if (!checkNumber(id, 11)) {
-            return "ERROR|Student ID must be exactly 11 digits";
+    string checkSignup(string roll, string name, string email, string phone, string pass, string typedOtp, string savedOtp) {
+        if (!isDigits(roll, 11)) {
+            return "ERROR|Student ID must be 11 digits";
         }
-        if (n.length() < 2) {
-            return "ERROR|Please enter a valid name";
+        if (name.length() < 2) {
+            return "ERROR|Enter a valid name";
         }
-        if (e.find('@') == string::npos || e.find('.') == string::npos) {
-            return "ERROR|Invalid email format";
+        if (email.find('@') == string::npos || email.find('.') == string::npos) {
+            return "ERROR|Invalid email address";
         }
-        if (!checkNumber(m, 10)) {
-            return "ERROR|Mobile number must be exactly 10 digits";
+        if (!isDigits(phone, 10)) {
+            return "ERROR|Mobile number must be 10 digits";
         }
         if (pass.length() < 4) {
             return "ERROR|Password must be at least 4 characters";
         }
-        if (userOtp != realOtp || realOtp == "") {
-            return "ERROR|Wrong OTP entered";
+        if (savedOtp == "" || typedOtp != savedOtp) {
+            return "ERROR|Wrong or expired OTP";
         }
-
-        return "VALID|Student verified by C++";
+        return "VALID|Signup verified by C++";
     }
 
-    string checkLogin(string id, string pass) {
-        if (!checkNumber(id, 11)) {
+    string checkLogin(string roll, string pass, string typedOtp, string savedOtp) {
+        if (!isDigits(roll, 11)) {
             return "ERROR|Student ID must be 11 digits";
         }
         if (pass.length() < 4) {
             return "ERROR|Password must be at least 4 characters";
+        }
+        if (typedOtp != "NONE" && (savedOtp == "" || typedOtp != savedOtp)) {
+            return "ERROR|Wrong or expired Login OTP";
         }
         return "VALID|Login verified by C++";
     }

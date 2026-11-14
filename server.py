@@ -1,7 +1,7 @@
 import os
 import random
 import subprocess
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import db
@@ -34,10 +34,6 @@ def call_cpp(*args) -> list[str]:
         raise HTTPException(status_code=500, detail=f"C++ Backend Error: {str(e)}")
 
 
-class OtpRequest(BaseModel):
-    email: str = ""
-    student_id: str = ""
-
 class SignupRequest(BaseModel):
     student_id: str
     name: str
@@ -69,6 +65,10 @@ class AcceptOfferRequest(BaseModel):
     offer_id: int
     owner_id: str
 
+class CompleteHandshakeRequest(BaseModel):
+    item_id: int
+    handshake_code: str
+
 class BloodRequestModel(BaseModel):
     blood_group: str
     units: int
@@ -92,13 +92,15 @@ def cpp_status():
     return {"status": parts[0], "engine": parts[1]}
 
 
-# --- Auth Routes (Executed by C++ student.h) ---
+# --- Universal OTP Route (Handles Both Signup Email & Login Student ID) ---
 @app.post("/api/auth/send-otp")
-def send_otp(req: OtpRequest):
-    email = req.email.strip()
-    sid = req.student_id.strip()
+@app.post("/api/send-otp")
+async def send_otp(request: Request):
+    data = await request.json()
+    email = str(data.get("email") or data.get("user_email") or data.get("to_email") or "").strip().lower()
+    sid = str(data.get("student_id") or data.get("sid") or data.get("id") or "").strip()
 
-    # Login tab se student_id aayi hai toh DB se registered email nikalo
+    # If user is on Login tab (only student_id provided), look up registered email from DB
     if not email and sid:
         conn = db.get_connection()
         cur = conn.cursor()
@@ -106,14 +108,14 @@ def send_otp(req: OtpRequest):
             cur.execute("SELECT email FROM users WHERE student_id=%s", (sid,))
             row = cur.fetchone()
             if not row:
-                raise HTTPException(status_code=404, detail="Student ID not registered")
-            email = row[0]
+                raise HTTPException(status_code=404, detail="Student ID not found. Please Sign Up first.")
+            email = row[0].strip().lower()
         finally:
             cur.close()
             conn.close()
 
     if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="Please enter a valid Student ID or Email")
+        raise HTTPException(status_code=400, detail="Enter your Student ID (for Login) or Email (for Signup) first")
 
     otp = str(random.randint(100000, 999999))
     otp_store[email] = otp
@@ -126,15 +128,18 @@ def send_otp(req: OtpRequest):
         f"Your EcoTrade OTP is: {otp}\nValid for 10 minutes."
     )
     if not sent:
-        raise HTTPException(status_code=500, detail="Failed to send OTP email")
+        raise HTTPException(status_code=500, detail="Failed to send OTP email. Check Brevo API key.")
     return {"message": f"OTP sent to {email}"}
 
 
+# --- Signup Route (Executed by C++ student.h) ---
 @app.post("/api/auth/signup")
 def signup(req: SignupRequest):
-    email = req.email.strip()
-    real_otp = otp_store.get(email, "")
-    call_cpp("SIGNUP", req.student_id, req.name, email, req.mobile, req.password, req.otp, real_otp)
+    email = req.email.strip().lower()
+    sid = req.student_id.strip()
+    real_otp = otp_store.get(email) or otp_store.get(sid) or ""
+
+    call_cpp("SIGNUP", sid, req.name.strip(), email, req.mobile.strip(), req.password, req.otp.strip(), real_otp)
 
     conn = db.get_connection()
     cur = conn.cursor()
@@ -144,40 +149,40 @@ def signup(req: SignupRequest):
             INSERT INTO users (student_id, name, email, mobile, blood_group, password)
             VALUES (%s, %s, %s, %s, %s, %s)
             """,
-            (req.student_id, req.name, email, req.mobile, req.blood_group, req.password)
+            (sid, req.name.strip(), email, req.mobile.strip(), req.blood_group, req.password)
         )
         conn.commit()
         otp_store.pop(email, None)
-        return {"message": "Account created via C++ Backend", "student_id": req.student_id}
+        otp_store.pop(sid, None)
+        return {"message": "Account created via C++ Backend", "student_id": sid}
     except Exception:
         conn.rollback()
-        raise HTTPException(status_code=400, detail="Student ID or Email already exists")
+        raise HTTPException(status_code=400, detail="Student ID or Email already registered")
     finally:
         cur.close()
         conn.close()
 
 
+# --- Login Route (Executed by C++ student.h) ---
 @app.post("/api/auth/login")
 def login(req: LoginRequest):
-    call_cpp("LOGIN", req.student_id, req.password)
+    sid = req.student_id.strip()
+    user_otp = req.otp.strip() if req.otp.strip() else "NONE"
+    real_otp = otp_store.get(sid, "") if user_otp != "NONE" else "NONE"
 
-    # Agar login form mein OTP bhari gayi hai toh verify karo
-    if req.otp.strip():
-        saved_otp = otp_store.get(req.student_id.strip(), "")
-        if req.otp.strip() != saved_otp:
-            raise HTTPException(status_code=400, detail="Wrong OTP entered")
+    call_cpp("LOGIN", sid, req.password, user_otp, real_otp)
 
     conn = db.get_connection()
     cur = conn.cursor()
     try:
         cur.execute(
             "SELECT student_id, name, email, mobile, blood_group FROM users WHERE student_id=%s AND password=%s",
-            (req.student_id, req.password)
+            (sid, req.password)
         )
         user = cur.fetchone()
         if not user:
             raise HTTPException(status_code=401, detail="Invalid Student ID or Password")
-        otp_store.pop(req.student_id.strip(), None)
+        otp_store.pop(sid, None)
         return {
             "student_id": user[0],
             "name": user[1],
@@ -190,7 +195,7 @@ def login(req: LoginRequest):
         conn.close()
 
 
-# --- Barter Routes (Executed by C++ Barter.h) ---
+# --- Barter Marketplace Routes (Executed by C++ Barter.h) ---
 @app.get("/api/items")
 def get_items(viewer_id: str = ""):
     conn = db.get_connection()
@@ -243,6 +248,38 @@ def create_item(req: ItemRequest):
         new_id = cur.fetchone()[0]
         conn.commit()
         return {"message": "Item listed", "id": new_id}
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.get("/api/offers")
+def get_offers(owner_id: str = ""):
+    conn = db.get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT o.id, o.item_id, i.title, o.bidder_id, u.name, u.mobile, o.offer_text, o.status
+            FROM offers o
+            JOIN items i ON o.item_id = i.id
+            JOIN users u ON o.bidder_id = u.student_id
+            WHERE i.owner_id=%s OR %s=''
+            ORDER BY o.id DESC
+        """, (owner_id, owner_id))
+        rows = cur.fetchall()
+        return [
+            {
+                "id": r[0],
+                "item_id": r[1],
+                "item_title": r[2],
+                "bidder_id": r[3],
+                "bidder_name": r[4],
+                "bidder_mobile": r[5] if r[7] == "ACCEPTED" else "Hidden until accepted",
+                "offer_text": r[6],
+                "status": r[7]
+            }
+            for r in rows
+        ]
     finally:
         cur.close()
         conn.close()
@@ -314,7 +351,38 @@ def accept_offer(req: AcceptOfferRequest):
         conn.close()
 
 
-# --- Blood Bank Priority Queue Route (Executed by C++ blooddonate.h) ---
+@app.post("/api/offers/complete")
+def complete_handshake(req: CompleteHandshakeRequest):
+    conn = db.get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT handshake_code FROM items WHERE id=%s", (req.item_id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Item not found")
+
+        call_cpp("HANDSHAKE", req.handshake_code.strip(), row[0] or "")
+        cur.execute("UPDATE items SET status='COMPLETED' WHERE id=%s", (req.item_id,))
+        conn.commit()
+        return {"message": "Barter exchange verified and completed via C++"}
+    finally:
+        cur.close()
+        conn.close()
+
+
+# --- Blood Bank Priority Queue Routes (Executed by C++ blooddonate.h) ---
+@app.get("/api/blood/stock")
+def get_blood_stock():
+    conn = db.get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT blood_group, units FROM blood_stock ORDER BY blood_group")
+        return [{"blood_group": r[0], "units": r[1]} for r in cur.fetchall()]
+    finally:
+        cur.close()
+        conn.close()
+
+
 @app.post("/api/blood/dispatch")
 def dispatch_blood(req: BloodRequestModel):
     conn = db.get_connection()

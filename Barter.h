@@ -3,8 +3,7 @@
 
 #include <iostream>
 #include <string>
-#include <cstdlib>
-#include <ctime>
+#include <random>
 
 using namespace std;
 
@@ -46,6 +45,7 @@ public:
         temp->next = newNode;
     }
 
+    // Rule 1: Validate Offer
     string checkOffer(string ownerId, string bidderId, string status) {
         if (status != "OPEN") {
             return "ERROR|This item is already closed";
@@ -56,20 +56,33 @@ public:
         return "ALLOWED|Offer allowed by C++";
     }
 
+    // Rule 2: Accept Offer -> Generate Unique 4-Digit Handshake OTP & Unlock Numbers
     string acceptOffer(string ownerId, string bidderId) {
         if (ownerId == bidderId) {
             return "ERROR|Self-barter is not allowed";
         }
-        srand(time(0));
-        int handshakeCode = 1000 + (rand() % 9000);
+        random_device rd;
+        mt19937 gen(rd());
+        uniform_int_distribution<int> dist(1000, 9999);
+        int handshakeCode = dist(gen);
         return "ACCEPTED|" + to_string(handshakeCode);
     }
 
+    // Rule 3: Privacy Guard — Reveal Mobile Numbers Only After Acceptance
     string canViewMobile(string viewerId, string ownerId, string acceptedBidderId, string status) {
-        if (status == "ACCEPTED" && (viewerId == ownerId || viewerId == acceptedBidderId)) {
+        if ((status == "ACCEPTED" || status == "COMPLETED") &&
+            (viewerId == ownerId || viewerId == acceptedBidderId)) {
             return "SHOW";
         }
         return "HIDE";
+    }
+
+    // Rule 4: Verify Physical Handshake OTP
+    string verifyHandshake(string enteredCode, string actualCode) {
+        if (actualCode == "" || enteredCode != actualCode) {
+            return "ERROR|Wrong Handshake OTP";
+        }
+        return "COMPLETED|Barter completed via C++";
     }
 
     ~Barter() {

@@ -10,7 +10,7 @@ BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 
 def send_mail(to_email: str, subject: str, body: str) -> bool:
     if not MY_EMAIL or not BREVO_API_KEY:
-        print("Mail Error: MY_EMAIL or BREVO_API_KEY not set.")
+        print("Mail Error: MY_EMAIL or BREVO_API_KEY not set in Environment.")
         return False
 
     try:

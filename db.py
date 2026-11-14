@@ -8,6 +8,8 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 def get_connection():
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL is not set in environment variables")
     return psycopg2.connect(DATABASE_URL)
 
 
@@ -39,6 +41,10 @@ def init_db():
             handshake_code VARCHAR(10)
         );
     """)
+
+    # Auto-add columns in case old table existed
+    cur.execute("ALTER TABLE items ADD COLUMN IF NOT EXISTS accepted_bidder_id VARCHAR(20);")
+    cur.execute("ALTER TABLE items ADD COLUMN IF NOT EXISTS handshake_code VARCHAR(10);")
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS offers (
