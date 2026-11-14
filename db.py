@@ -8,8 +8,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 def get_connection():
-    if not DATABASE_URL:
-        raise RuntimeError("DATABASE_URL is not set")
     return psycopg2.connect(DATABASE_URL)
 
 
@@ -24,16 +22,9 @@ def init_db():
             email VARCHAR(120) UNIQUE NOT NULL,
             mobile VARCHAR(15) NOT NULL,
             blood_group VARCHAR(10) DEFAULT 'O+',
-            password VARCHAR(100) DEFAULT '1234',
-            roll_number VARCHAR(30) DEFAULT '',
-            course VARCHAR(100) DEFAULT '',
-            year VARCHAR(30) DEFAULT ''
+            password VARCHAR(100) NOT NULL
         );
     """)
-
-    cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS roll_number VARCHAR(30) DEFAULT '';")
-    cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS course VARCHAR(100) DEFAULT '';")
-    cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS year VARCHAR(30) DEFAULT '';")
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS items (
@@ -48,9 +39,6 @@ def init_db():
             handshake_code VARCHAR(10)
         );
     """)
-
-    cur.execute("ALTER TABLE items ADD COLUMN IF NOT EXISTS accepted_bidder_id VARCHAR(20);")
-    cur.execute("ALTER TABLE items ADD COLUMN IF NOT EXISTS handshake_code VARCHAR(10);")
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS offers (
@@ -69,7 +57,8 @@ def init_db():
         );
     """)
 
-    for bg in ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]:
+    blood_groups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+    for bg in blood_groups:
         cur.execute("""
             INSERT INTO blood_stock (blood_group, units)
             VALUES (%s, 10)
