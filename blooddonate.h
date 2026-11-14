@@ -10,7 +10,7 @@ using namespace std;
 
 struct BloodRequest {
     string group;
-    int urgency; // 1 = Critical, 2 = High, 3 = Normal
+    int urgency;
     int units;
 
     bool operator>(const BloodRequest& other) const {

@@ -1,782 +1,166 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>EcoTrade — Campus Barter &amp; Blood Bank</title>
-<link href="https://fonts.googleapis.com" rel="preconnect"/>
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script id="tailwind-config">
-  tailwind.config = {
-    darkMode: "class",
-    theme: {
-      extend: {
-        "colors": {
-          "mist-lavender": "#e8e5f5",
-          "input-border": "rgba(0, 0, 0, 0.08)",
-          "error": "#ba1a1a",
-          "mist-sky": "#e3eefc",
-          "input-surface": "rgba(0, 0, 0, 0.03)",
-          "text-secondary": "#86868b",
-          "secondary": "#4854bb",
-          "glass-border": "rgba(0, 0, 0, 0.06)",
-          "text-tertiary": "#a1a1a6",
-          "on-error-container": "#93000a",
-          "error-container": "#ffdad6",
-          "canvas-background": "#f5f5f7",
-          "glass-surface": "rgba(255, 255, 255, 0.72)",
-          "secondary-fixed": "#dfe0ff",
-          "text-primary": "#1d1d1f",
-          "mist-sand": "#f7ede2",
-          "on-secondary-fixed": "#000965"
-        },
-        "spacing": {
-          "space-md": "1rem",
-          "space-sm": "0.5rem"
-        },
-        "fontFamily": {
-          "label-md": ["Inter"],
-          "headline-md": ["Inter"],
-          "mono-label": ["JetBrains Mono"],
-          "body-sm": ["Inter"],
-          "headline-sm": ["Inter"],
-          "mono-input": ["JetBrains Mono"],
-          "body-md": ["Inter"]
-        },
-        "fontSize": {
-          "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
-          "headline-md": ["20px", { "lineHeight": "26px", "letterSpacing": "-0.015em", "fontWeight": "500" }],
-          "mono-label": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
-          "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" }],
-          "headline-sm": ["16px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
-          "mono-input": ["18px", { "lineHeight": "22px", "letterSpacing": "0.12em", "fontWeight": "500" }],
-          "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.005em", "fontWeight": "400" }]
-        }
-      }
-    }
-  }
-</script>
-<style>
-  .glass-panel {
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.03), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
-  }
-  .glass-input {
-    background: rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .glass-input:focus {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: #5e6ad2;
-    box-shadow: 0 0 0 3px rgba(94, 106, 210, 0.15);
-    outline: none;
-  }
-  .btn-obsidian {
-    background: #111111;
-    color: #ffffff;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: transform 150ms ease, opacity 150ms ease;
-  }
-  .btn-obsidian:active { transform: scale(0.98); opacity: 0.92; }
-  .tab-active {
-    background: #ffffff;
-    color: #111111;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-    font-weight: 600;
-  }
-  .tab-inactive { color: #86868b; }
-  .tab-inactive:hover { color: #1d1d1f; }
-  .view-container { display: none; opacity: 0; transform: translateY(6px); transition: opacity 220ms ease, transform 220ms ease; }
-  .view-container.active { display: block; opacity: 1; transform: translateY(0); }
-</style>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EcoTrade Campus — Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+    .top { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    .box { background: #1e293b; padding: 18px; border-radius: 10px; }
+    h3 { margin-top: 0; color: #10b981; }
+    input, select { width: 100%; padding: 9px; margin: 5px 0 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; box-sizing: border-box; }
+    button { padding: 8px 14px; background: #10b981; color: #0f172a; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .item { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #334155; }
+    .badge { background: #334155; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+  </style>
 </head>
-<body class="bg-canvas-background text-text-primary antialiased min-h-screen relative selection:bg-secondary-fixed selection:text-on-secondary-fixed">
-
-<!-- Toast Banner -->
-<div id="toast" class="fixed bottom-6 right-6 z-50 hidden glass-panel px-5 py-3 rounded-2xl text-body-sm font-medium shadow-xl border"></div>
-
-<!-- Ambient Mist Gradients -->
-<div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-  <div class="absolute -top-32 -left-32 w-[600px] h-[600px] bg-mist-sky rounded-full blur-[140px] opacity-70"></div>
-  <div class="absolute top-1/3 -right-40 w-[550px] h-[550px] bg-mist-lavender rounded-full blur-[140px] opacity-60"></div>
-  <div class="absolute -bottom-40 left-1/4 w-[650px] h-[650px] bg-mist-sand rounded-full blur-[160px] opacity-60"></div>
+<body>
+<div class="top">
+  <div><strong style="color:#10b981;font-size:18px;">EcoTrade Campus</strong> — <span id="userInfo"></span></div>
+  <button onclick="logout()" style="background:#ef4444;color:#fff;">Logout</button>
 </div>
 
-<!-- 1. Sticky Frosted Top Navigation Bar -->
-<header class="sticky top-0 z-40 w-full bg-glass-surface backdrop-blur-xl border-b border-glass-border">
-  <div class="max-w-7xl mx-auto px-space-md py-space-sm flex flex-col md:flex-row items-center justify-between gap-3">
-    <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
-      <div class="flex items-center gap-2">
-        <span class="text-headline-md font-headline-md tracking-tight text-text-primary font-bold">EcoTrade</span>
-        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-input-surface border border-glass-border text-mono-label font-mono-label text-text-secondary">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
-          CAMPUS NET
-        </span>
-      </div>
-      <button onclick="signOut()" class="md:hidden text-mono-label font-mono-label text-text-secondary hover:text-text-primary px-2 py-1">
-        Sign Out
-      </button>
-    </div>
-
-    <nav aria-label="Dashboard Views" class="p-1 rounded-full bg-input-surface border border-glass-border flex items-center shadow-inner">
-      <button class="tab-btn tab-active px-4 py-1.5 rounded-full text-label-md font-label-md transition-all duration-200 flex items-center gap-1.5" id="tab-barter" onclick="switchTab('barter')">
-        <span class="material-symbols-outlined text-sm leading-none">swap_horiz</span>
-        Barter Exchange
-      </button>
-      <button class="tab-btn tab-inactive px-4 py-1.5 rounded-full text-label-md font-label-md transition-all duration-200 flex items-center gap-1.5" id="tab-blood" onclick="switchTab('blood')">
-        <span class="material-symbols-outlined text-sm leading-none">emergency</span>
-        Blood Bank
-      </button>
-      <button class="tab-btn tab-inactive px-4 py-1.5 rounded-full text-label-md font-label-md transition-all duration-200 flex items-center gap-1.5" id="tab-ledger" onclick="switchTab('ledger')">
-        <span class="material-symbols-outlined text-sm leading-none">history</span>
-        Activity History
-      </button>
-    </nav>
-
-    <div class="hidden md:flex items-center gap-3">
-      <div class="flex items-center gap-3 pl-3 pr-2 py-1 rounded-full bg-white/70 border border-glass-border shadow-sm">
-        <div class="flex flex-col text-right leading-tight">
-          <span id="navUserName" class="text-body-sm font-body-sm font-semibold text-text-primary">Student</span>
-          <span id="navUserId" class="text-mono-label font-mono-label text-text-secondary">ID: -----------</span>
-        </div>
-        <span id="navUserPoints" class="px-2.5 py-1 rounded-full bg-[#111111] text-[#e4f222] text-mono-label font-mono-label tracking-wide flex items-center gap-1">
-          ★ 0 PTS
-        </span>
-      </div>
-      <button onclick="signOut()" class="text-label-md font-label-md text-text-secondary hover:text-text-primary px-3 py-1.5 rounded-full hover:bg-input-surface transition-colors">
-        Sign Out
-      </button>
-    </div>
+<div class="grid">
+  <!-- LIST NEW ITEM -->
+  <div class="box">
+    <h3>List Item for Barter</h3>
+    <input id="i_title" placeholder="Item Name (e.g. Engineering Graphics Kit)">
+    <input id="i_cat" placeholder="Category (Books / Electronics / Tools)">
+    <input id="i_cond" placeholder="Condition (Like New / Good)">
+    <input id="i_exp" placeholder="Expected in Return">
+    <button onclick="addItem()">Post Item</button>
   </div>
-</header>
 
-<!-- Main Canvas Wrapper -->
-<main class="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-8">
-
-  <!-- ============================================================== -->
-  <!-- VIEW 1: BARTER EXCHANGE -->
-  <!-- ============================================================== -->
-  <section class="view-container active" id="view-barter">
-    <div class="glass-panel p-4 md:p-5 rounded-3xl mb-8 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-      <div class="relative flex-1 max-w-lg">
-        <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary text-lg">search</span>
-        <input id="searchInput" oninput="loadItems()" class="glass-input w-full pl-10 pr-4 py-2.5 rounded-2xl text-body-sm font-body-sm text-text-primary placeholder:text-text-tertiary" placeholder="Search electronics or desired item..." type="text"/>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2.5 justify-end">
-        <button id="sortBtn" onclick="toggleSort()" class="px-3.5 py-2 rounded-2xl bg-white/70 hover:bg-white text-text-primary text-label-md font-label-md border border-glass-border flex items-center gap-1.5 transition-all">
-          <span class="material-symbols-outlined text-sm text-text-secondary">sort</span>
-          <span>Sort: Oldest First</span>
-        </button>
-        <button id="availBtn" onclick="toggleAvail()" class="px-3.5 py-2 rounded-2xl bg-white/70 hover:bg-white text-text-primary text-label-md font-label-md border border-glass-border flex items-center gap-1.5 transition-all">
-          <span id="availDot" class="w-2 h-2 rounded-full bg-zinc-400"></span>
-          <span>Available Only</span>
-        </button>
-        <button class="btn-obsidian px-5 py-2.5 rounded-2xl text-label-md font-label-md font-medium flex items-center gap-1.5" onclick="openModal('modal-list-item')">
-          <span class="material-symbols-outlined text-sm">add</span>
-          List Item
-        </button>
-      </div>
-    </div>
-
-    <!-- Dynamic 3-Column Item Card Grid -->
-    <div id="barterGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-  </section>
-
-  <!-- ============================================================== -->
-  <!-- VIEW 2: CAMPUS EMERGENCY BLOOD BANK -->
-  <!-- ============================================================== -->
-  <section class="view-container" id="view-blood">
-    <div class="mb-8">
-      <div class="flex items-center justify-between mb-3 px-1">
-        <h2 class="text-headline-sm font-headline-sm font-semibold text-text-primary flex items-center gap-2">
-          <span class="material-symbols-outlined text-rose-600">bloodtype</span>
-          Campus Blood Inventory
-        </h2>
-        <span class="text-mono-label font-mono-label text-text-secondary">Live Stock Monitor</span>
-      </div>
-      <div id="bloodStockStrip" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3"></div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-      <!-- Left Card — Donate Blood -->
-      <article class="glass-panel p-6 md:p-8 rounded-3xl flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-headline-md font-headline-md font-semibold text-text-primary">Donate Blood</h3>
-            <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-800 text-mono-label font-mono-label font-medium">+25 PTS EARNED</span>
-          </div>
-          <p class="text-body-sm font-body-sm text-text-secondary mb-6">Log your verified blood unit donation at the campus health center.</p>
-          <form class="space-y-4" onsubmit="submitDonation(event)">
-            <div>
-              <label class="block text-label-md font-label-md text-text-primary mb-1.5">Blood Group</label>
-              <select id="donateGroup" class="glass-input w-full px-4 py-2.5 rounded-2xl text-body-sm font-body-sm text-text-primary">
-                <option value="O+">O+</option>
-                <option value="O-">O- (Universal Donor)</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-label-md font-label-md text-text-primary mb-1.5">Donation Center</label>
-              <input id="donateCenter" class="glass-input w-full px-4 py-2.5 rounded-2xl text-body-sm font-body-sm text-text-primary" type="text" value="Campus Health Center" required/>
-            </div>
-            <div class="pt-2">
-              <label class="flex items-start gap-3 cursor-pointer">
-                <input class="mt-1 rounded border-glass-border text-primary focus:ring-0" required type="checkbox"/>
-                <span class="text-body-sm font-body-sm text-text-secondary">
-                  I confirm medical fitness and absence of viral illness in the past 14 days.
-                </span>
-              </label>
-            </div>
-            <div class="pt-4">
-              <button class="btn-obsidian w-full py-3 rounded-2xl text-label-md font-label-md font-semibold" type="submit">
-                Log Donation (+25 Eco-Points)
-              </button>
-              <p class="text-[11px] font-mono-label text-text-tertiary text-center mt-2.5">
-                A 90-day recovery window applies between donations.
-              </p>
-            </div>
-          </form>
-        </div>
-      </article>
-
-      <!-- Right Card — Request Emergency Blood -->
-      <article class="glass-panel p-6 md:p-8 rounded-3xl flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-headline-md font-headline-md font-semibold text-text-primary">Request Emergency Blood</h3>
-            <span class="px-2.5 py-1 rounded-full bg-error-container text-on-error-container text-mono-label font-mono-label font-semibold">Priority Request</span>
-          </div>
-          <p class="text-body-sm font-body-sm text-text-secondary mb-6">Fast-track blood unit allocation for emergency trauma units and hospital requests.</p>
-          <form class="space-y-4" onsubmit="submitDispatch(event)">
-            <div>
-              <label class="block text-label-md font-label-md text-text-primary mb-1.5">Hospital Name</label>
-              <input id="reqHospital" class="glass-input w-full px-4 py-2.5 rounded-2xl text-body-sm font-body-sm text-text-primary" placeholder="e.g. City General Hospital" type="text" required/>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-label-md font-label-md text-text-primary mb-1.5">Required Blood Group</label>
-                <select id="reqGroup" class="glass-input w-full px-4 py-2.5 rounded-2xl text-body-sm font-body-sm text-text-primary">
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-label-md font-label-md text-text-primary mb-1.5">Urgency</label>
-                <select id="reqUrgency" class="glass-input w-full px-4 py-2.5 rounded-2xl text-body-sm font-body-sm text-text-primary font-medium">
-                  <option value="3">Critical — ICU / Trauma</option>
-                  <option value="2">High — Scheduled Surgery</option>
-                  <option value="1">Routine Check / Observation</option>
-                </select>
-              </div>
-            </div>
-            <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-body-sm font-body-sm text-amber-900 flex items-center gap-2.5">
-              <span class="material-symbols-outlined text-amber-700 text-lg">info</span>
-              <span>Automatically matches O- universal units if exact group is out of stock.</span>
-            </div>
-            <div class="pt-4">
-              <button class="btn-obsidian w-full py-3 rounded-2xl text-label-md font-label-md font-semibold flex items-center justify-center gap-2" type="submit">
-                <span class="material-symbols-outlined text-sm text-rose-400">local_shipping</span>
-                Request Immediate Dispatch
-              </button>
-              <p class="text-[11px] font-mono-label text-text-tertiary text-center mt-2.5">
-                Hospital coordination team receives immediate dispatch confirmation.
-              </p>
-            </div>
-          </form>
-        </div>
-      </article>
-    </div>
-
-    <!-- Bottom Glass Table -->
-    <div class="glass-panel p-6 rounded-3xl overflow-hidden">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-headline-sm font-headline-sm font-semibold text-text-primary">Currently Stored Blood Units</h3>
-        <span class="text-mono-label font-mono-label text-text-secondary">Temperature Monitored</span>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-body-sm font-body-sm">
-          <thead>
-            <tr class="border-b border-glass-border text-mono-label font-mono-label text-text-secondary">
-              <th class="pb-3 font-medium">Unit ID</th>
-              <th class="pb-3 font-medium">Blood Group</th>
-              <th class="pb-3 font-medium">Donor ID</th>
-              <th class="pb-3 font-medium">Storage Center</th>
-              <th class="pb-3 font-medium text-right">Status</th>
-            </tr>
-          </thead>
-          <tbody id="bloodTableBody" class="divide-y divide-glass-border/60"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================================== -->
-  <!-- VIEW 3: ACTIVITY HISTORY -->
-  <!-- ============================================================== -->
-  <section class="view-container" id="view-ledger">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <article class="glass-panel p-6 md:p-8 rounded-3xl">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-headline-md font-headline-md font-semibold text-text-primary">Completed Swaps</h3>
-          <span class="material-symbols-outlined text-text-secondary">task_alt</span>
-        </div>
-        <p class="text-body-sm font-body-sm text-text-secondary mb-6">Physical item handovers verified with 4-digit handshake codes.</p>
-        <div id="swapHistoryList" class="space-y-3"></div>
-      </article>
-
-      <article class="glass-panel p-6 md:p-8 rounded-3xl">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-headline-md font-headline-md font-semibold text-text-primary">Hospital Blood Dispatches</h3>
-          <span class="material-symbols-outlined text-rose-600">local_hospital</span>
-        </div>
-        <p class="text-body-sm font-body-sm text-text-secondary mb-6">Confirmed unit transfers to regional clinics and hospital care teams.</p>
-        <div id="bloodHistoryList" class="space-y-3"></div>
-      </article>
-    </div>
-  </section>
-</main>
-
-<!-- MODAL: + List Item -->
-<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-200" id="modal-list-item">
-  <div class="glass-panel w-full max-w-lg p-6 md:p-8 rounded-3xl shadow-2xl transform scale-95 transition-transform duration-200">
-    <div class="flex items-center justify-between mb-5">
-      <div>
-        <h3 class="text-headline-md font-headline-md font-bold text-text-primary">List Hardware for Barter</h3>
-        <p class="text-body-sm font-body-sm text-text-secondary">E-waste reduction • Circular campus trade</p>
-      </div>
-      <button class="p-1 rounded-full text-text-secondary hover:text-text-primary hover:bg-input-surface transition-colors" onclick="closeModal('modal-list-item')">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
-    <form class="space-y-4" onsubmit="publishItem(event)">
-      <div>
-        <label class="block text-label-md font-label-md text-text-primary mb-1.5">Item Name &amp; Specs</label>
-        <input id="newItemName" class="glass-input w-full px-4 py-2.5 rounded-2xl text-body-sm font-body-sm text-text-primary placeholder:text-text-tertiary" placeholder="e.g. Raspberry Pi 4 Model B (4GB RAM)" required type="text"/>
-      </div>
-      <div>
-        <label class="block text-label-md font-label-md text-text-primary mb-1.5">Condition</label>
-        <select id="newItemCond" class="glass-input w-full px-3.5 py-2.5 rounded-2xl text-body-sm font-body-sm text-text-primary">
-          <option value="Mint">Mint (Like New)</option>
-          <option value="Excellent">Excellent</option>
-          <option value="Good">Good</option>
-          <option value="Fair">Fair</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-label-md font-label-md text-text-primary mb-1.5">Seeking in Return</label>
-        <input id="newItemWant" class="glass-input w-full px-4 py-2.5 rounded-2xl text-body-sm font-body-sm text-text-primary placeholder:text-text-tertiary" placeholder="e.g. Soldering Iron or Mechanical Keyboard" required type="text"/>
-      </div>
-      <div class="pt-3 flex gap-3">
-        <button class="flex-1 py-2.5 rounded-2xl bg-white/70 hover:bg-white text-text-secondary text-label-md font-label-md border border-glass-border" onclick="closeModal('modal-list-item')" type="button">
-          Cancel
-        </button>
-        <button class="btn-obsidian flex-1 py-2.5 rounded-2xl text-label-md font-label-md font-semibold" type="submit">
-          Publish Item
-        </button>
-      </div>
-    </form>
+  <!-- INCOMING OFFERS -->
+  <div class="box">
+    <h3>Incoming Barter Offers</h3>
+    <div id="offersList"></div>
   </div>
+
+  <!-- EMERGENCY BLOOD BANK -->
+  <div class="box">
+    <h3>Blood Bank (C++ Priority Queue)</h3>
+    <div id="bloodStock" style="margin-bottom:12px;font-size:14px;"></div>
+    <select id="b_group">
+      <option>O+</option><option>O-</option><option>A+</option><option>A-</option>
+      <option>B+</option><option>B-</option><option>AB+</option><option>AB-</option>
+    </select>
+    <input id="b_units" type="number" value="1" min="1" placeholder="Units Required">
+    <select id="b_urg">
+      <option value="1">Urgency 1 — CRITICAL</option>
+      <option value="2">Urgency 2 — HIGH</option>
+      <option value="3">Urgency 3 — NORMAL</option>
+    </select>
+    <button onclick="dispatchBlood()">Dispatch Blood</button>
+    <p id="bloodMsg" style="color:#38bdf8;font-size:13px;"></p>
+  </div>
+</div>
+
+<div class="box" style="margin-top:20px;">
+  <h3>Campus Barter Marketplace</h3>
+  <div id="itemsList"></div>
 </div>
 
 <script>
-  const API = "/api";
-  let currentUser = JSON.parse(localStorage.getItem("ecotrade_user") || "null");
+const user = JSON.parse(localStorage.getItem('ecotrade_user') || 'null');
+if (!user) window.location.href = '/';
+document.getElementById('userInfo').innerText = `${user.name} (${user.student_id})`;
 
-  if (!currentUser) {
-    window.location.href = "login.html";
-  }
+function logout() {
+  localStorage.removeItem('ecotrade_user');
+  window.location.href = '/';
+}
 
-  let sortOrder = "forward";
-  let onlyAvailable = false;
+async function addItem() {
+  await fetch('/api/items', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      owner_id: user.student_id,
+      title: document.getElementById('i_title').value,
+      category: document.getElementById('i_cat').value || 'General',
+      condition: document.getElementById('i_cond').value || 'Good',
+      expected_return: document.getElementById('i_exp').value || 'Open to offers'
+    })
+  });
+  loadAll();
+}
 
-  function showToast(msg, isError = false) {
-    const t = document.getElementById("toast");
-    t.className = isError
-      ? "fixed bottom-6 right-6 z-50 glass-panel px-5 py-3 rounded-2xl text-body-sm font-medium shadow-xl border border-red-500/30 text-red-700"
-      : "fixed bottom-6 right-6 z-50 glass-panel px-5 py-3 rounded-2xl text-body-sm font-medium shadow-xl border border-emerald-500/30 text-emerald-800";
-    t.textContent = msg;
-    t.classList.remove("hidden");
-    setTimeout(() => t.classList.add("hidden"), 3500);
-  }
+async function sendOffer(itemId) {
+  const offerText = prompt('What do you want to offer in exchange?');
+  if (!offerText) return;
+  const res = await fetch('/api/offers', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ item_id: itemId, bidder_id: user.student_id, offer_text: offerText })
+  });
+  const data = await res.json();
+  alert(data.message || data.detail);
+  loadAll();
+}
 
-  async function refreshUserProfile() {
-    try {
-      const res = await fetch(`${API}/students/${currentUser.studentId}`);
-      if (res.ok) {
-        currentUser = await res.json();
-        localStorage.setItem("ecotrade_user", JSON.stringify(currentUser));
-      }
-    } catch (e) {}
-    document.getElementById("navUserName").textContent = currentUser.name;
-    document.getElementById("navUserId").textContent = `ID: ${currentUser.studentId}`;
-    document.getElementById("navUserPoints").textContent = `★ ${currentUser.ecoPoints} PTS`;
-  }
+async function acceptOffer(itemId, offerId) {
+  const res = await fetch('/api/offers/accept', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ item_id: itemId, offer_id: offerId, owner_id: user.student_id })
+  });
+  const data = await res.json();
+  alert(data.message ? `${data.message}\n4-Digit Handshake Code: ${data.handshake_code}` : data.detail);
+  loadAll();
+}
 
-  function signOut() {
-    localStorage.removeItem("ecotrade_user");
-    window.location.href = "login.html";
-  }
+async function completeDeal(itemId) {
+  const code = prompt('Enter the 4-Digit Handshake Code:');
+  if (!code) return;
+  const res = await fetch('/api/offers/complete', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ item_id: itemId, handshake_code: code })
+  });
+  const data = await res.json();
+  alert(data.message || data.detail);
+  loadAll();
+}
 
-  function switchTab(viewId) {
-    document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(t => {
-      t.classList.remove('tab-active');
-      t.classList.add('tab-inactive');
-    });
-    document.getElementById('view-' + viewId).classList.add('active');
-    const activeBtn = document.getElementById('tab-' + viewId);
-    activeBtn.classList.remove('tab-inactive');
-    activeBtn.classList.add('tab-active');
+async function dispatchBlood() {
+  const res = await fetch('/api/blood/dispatch', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      blood_group: document.getElementById('b_group').value,
+      units: parseInt(document.getElementById('b_units').value),
+      urgency: parseInt(document.getElementById('b_urg').value)
+    })
+  });
+  const data = await res.json();
+  document.getElementById('bloodMsg').innerText = data.message || data.detail;
+  loadAll();
+}
 
-    if (viewId === 'barter') loadItems();
-    if (viewId === 'blood') loadBlood();
-    if (viewId === 'ledger') loadHistory();
-  }
+async function loadAll() {
+  const items = await (await fetch(`/api/items?viewer_id=${user.student_id}`)).json();
+  document.getElementById('itemsList').innerHTML = items.map(i => `
+    <div class="item">
+      <strong>${i.title}</strong> <span class="badge">${i.status}</span><br>
+      Owner: ${i.owner_name} (${i.owner_id}) | Mobile: <strong>${i.owner_mobile}</strong><br>
+      Condition: ${i.condition} | Wants: ${i.expected_return}<br>
+      ${i.handshake_code ? `<div style="color:#10b981;margin-top:4px;">4-Digit Meetup Code: <strong>${i.handshake_code}</strong></div>` : ''}
+      ${i.status === 'OPEN' && i.owner_id !== user.student_id ? `<button style="margin-top:8px;" onclick="sendOffer(${i.id})">Send Offer</button>` : ''}
+      ${i.status === 'ACCEPTED' ? `<button style="margin-top:8px;background:#3b82f6;color:#fff;" onclick="completeDeal(${i.id})">Verify Meetup Code</button>` : ''}
+    </div>
+  `).join('');
 
-  function openModal(id) {
-    const m = document.getElementById(id);
-    m.classList.remove('opacity-0', 'pointer-events-none');
-    m.classList.add('opacity-100', 'pointer-events-auto');
-  }
+  const offers = await (await fetch(`/api/offers?owner_id=${user.student_id}`)).json();
+  document.getElementById('offersList').innerHTML = offers.length ? offers.map(o => `
+    <div class="item">
+      <strong>${o.item_title}</strong> — Offer from ${o.bidder_name}: "${o.offer_text}"<br>
+      Mobile: ${o.bidder_mobile} | Status: ${o.status}
+      ${o.status === 'PENDING' ? `<br><button style="margin-top:6px;" onclick="acceptOffer(${o.item_id}, ${o.id})">Accept & Unlock Number</button>` : ''}
+    </div>
+  `).join('') : '<p style="color:#94a3b8;">No incoming offers yet.</p>';
 
-  function closeModal(id) {
-    const m = document.getElementById(id);
-    m.classList.remove('opacity-100', 'pointer-events-auto');
-    m.classList.add('opacity-0', 'pointer-events-none');
-  }
+  const stock = await (await fetch('/api/blood/stock')).json();
+  document.getElementById('bloodStock').innerHTML = stock.map(s => `<span class="badge" style="margin:3px;display:inline-block;">${s.blood_group}: ${s.units}u</span>`).join('');
+}
 
-  function toggleSort() {
-    sortOrder = sortOrder === "forward" ? "reverse" : "forward";
-    document.getElementById("sortBtn").querySelector("span:last-child").textContent =
-      sortOrder === "forward" ? "Sort: Oldest First" : "Sort: Newest First";
-    loadItems();
-  }
-
-  function toggleAvail() {
-    onlyAvailable = !onlyAvailable;
-    document.getElementById("availDot").className = onlyAvailable
-      ? "w-2 h-2 rounded-full bg-emerald-500"
-      : "w-2 h-2 rounded-full bg-zinc-400";
-    loadItems();
-  }
-
-  // ================= BARTER FUNCTIONS =================
-  async function loadItems() {
-    const q = document.getElementById("searchInput").value.trim();
-    const res = await fetch(`${API}/items?order=${sortOrder}&q=${encodeURIComponent(q)}&onlyAvailable=${onlyAvailable}`);
-    const items = await res.json();
-    const grid = document.getElementById("barterGrid");
-
-    if (items.length === 0) {
-      grid.innerHTML = `<div class="col-span-full glass-panel p-10 rounded-3xl text-center text-text-secondary text-body-sm">No hardware listed right now. Click "+ List Item" to post your first device.</div>`;
-      return;
-    }
-
-    grid.innerHTML = items.map(it => {
-      const isOwner = it.ownerId === currentUser.studentId;
-      const isBuyer = it.buyerId === currentUser.studentId;
-
-      let statusBadge = `<span class="inline-flex items-center gap-1 text-mono-label font-mono-label text-emerald-700 font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Available</span>`;
-      if (it.status === "REQUESTED") {
-        statusBadge = `<span class="inline-flex items-center gap-1 text-mono-label font-mono-label text-amber-700 font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Offer Pending</span>`;
-      } else if (it.status === "HANDSHAKE") {
-        statusBadge = `<span class="inline-flex items-center gap-1 text-mono-label font-mono-label text-blue-700 font-semibold animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span> Ready for Handover</span>`;
-      }
-
-      let actionHTML = "";
-      if (it.status === "AVAILABLE") {
-        if (isOwner) {
-          actionHTML = `<button onclick="deleteListing(${it.id})" class="w-full py-2 rounded-xl bg-white/70 hover:bg-red-50 text-red-700 text-label-md border border-glass-border">Remove My Listing</button>`;
-        } else {
-          actionHTML = `
-            <div class="flex gap-2">
-              <input id="offer-in-${it.id}" class="glass-input text-body-sm px-3.5 py-2 rounded-xl flex-1" placeholder="Your Offer..." type="text"/>
-              <button onclick="sendOffer(${it.id})" class="btn-obsidian px-4 py-2 rounded-xl text-label-md whitespace-nowrap">Send Offer</button>
-            </div>`;
-        }
-      } else if (it.status === "REQUESTED") {
-        if (isOwner) {
-          actionHTML = `
-            <div class="space-y-2">
-              <div class="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-mono-label text-amber-800">
-                Offer from ${it.buyerName}: <strong>${it.offerItem}</strong>
-              </div>
-              <div class="flex gap-2">
-                <button onclick="acceptOffer(${it.id})" class="btn-obsidian flex-1 py-2 rounded-xl text-label-md">Accept &amp; Share Contact</button>
-                <button onclick="rejectOffer(${it.id})" class="px-3.5 py-2 rounded-xl bg-white/70 hover:bg-white text-text-secondary text-label-md border border-glass-border">Decline</button>
-              </div>
-            </div>`;
-        } else if (isBuyer) {
-          actionHTML = `
-            <div class="space-y-2">
-              <div class="px-3 py-1.5 rounded-xl bg-amber-500/10 text-mono-label text-amber-800">Your Offer: <strong>${it.offerItem}</strong> (Pending)</div>
-              <button onclick="cancelOffer(${it.id})" class="w-full py-2 rounded-xl bg-white/70 hover:bg-white text-text-secondary text-label-md border border-glass-border">Cancel Offer</button>
-            </div>`;
-        } else {
-          actionHTML = `<div class="px-3 py-2 rounded-xl bg-black/5 text-mono-label text-text-secondary text-center">Offer currently under review</div>`;
-        }
-      } else if (it.status === "HANDSHAKE") {
-        if (isOwner || isBuyer) {
-          actionHTML = `
-            <div class="space-y-2.5">
-              <div class="p-3 rounded-2xl bg-white/70 border border-glass-border">
-                <div class="flex items-center gap-1.5 mb-1.5 text-mono-label text-emerald-800 font-semibold">
-                  <span class="material-symbols-outlined text-sm">lock_open</span>
-                  <span>Contact Unlocked · Campus Meetup</span>
-                </div>
-                <div class="space-y-1 text-mono-label text-text-primary">
-                  <div class="flex justify-between"><span>Owner: ${it.ownerName}</span><span class="font-semibold">${it.ownerPhone}</span></div>
-                  <div class="flex justify-between"><span>Partner: ${it.buyerName}</span><span class="font-semibold">${it.buyerPhone}</span></div>
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <input id="otp-in-${it.id}" class="glass-input text-center text-mono-input tracking-widest w-28 py-1.5 rounded-xl" maxlength="4" placeholder="••••" type="text"/>
-                <button onclick="verifyHandshake(${it.id})" class="btn-obsidian flex-1 py-2 rounded-xl text-label-md">Confirm Handover (+10 PTS)</button>
-              </div>
-            </div>`;
-        } else {
-          actionHTML = `<div class="px-3 py-2 rounded-xl bg-black/5 text-mono-label text-text-secondary text-center">Handover in progress</div>`;
-        }
-      }
-
-      return `
-        <article class="glass-panel p-6 rounded-3xl flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="px-2.5 py-1 rounded-lg bg-black/5 text-mono-label text-text-primary font-medium">#ITM-${it.id}</span>
-              <div class="flex items-center gap-2">
-                <span class="text-mono-label text-text-secondary px-2 py-0.5 rounded-full bg-input-surface">${it.condition}</span>
-                ${statusBadge}
-              </div>
-            </div>
-            <h3 class="text-headline-sm font-semibold text-text-primary mb-3">${it.name}</h3>
-            <div class="space-y-2 p-3.5 rounded-2xl bg-white/50 border border-glass-border mb-5 text-body-sm">
-              <div class="flex flex-col gap-0.5 text-mono-label">
-                <span class="text-text-secondary">Listed by: ${it.ownerName} · ${it.ownerId}</span>
-                ${it.status !== "HANDSHAKE" ? `<span class="text-[10px] text-text-tertiary italic">(Mobile hidden until accepted)</span>` : ""}
-              </div>
-              <div class="flex flex-col gap-0.5 pt-1.5 border-t border-glass-border">
-                <span class="text-mono-label text-text-secondary">Seeking in Return:</span>
-                <span class="text-body-sm text-text-primary font-medium">${it.wantItem}</span>
-              </div>
-            </div>
-          </div>
-          ${actionHTML}
-        </article>`;
-    }).join("");
-  }
-
-  async function publishItem(e) {
-    e.preventDefault();
-    const payload = {
-      ownerId: currentUser.studentId,
-      name: document.getElementById("newItemName").value.trim(),
-      condition: document.getElementById("newItemCond").value,
-      wantItem: document.getElementById("newItemWant").value.trim()
-    };
-    const res = await fetch(`${API}/items`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    if (res.ok) {
-      closeModal("modal-list-item");
-      e.target.reset();
-      showToast("Item listed on Barter Exchange!");
-      loadItems();
-    }
-  }
-
-  async function sendOffer(itemId) {
-    const offer = document.getElementById(`offer-in-${itemId}`).value.trim();
-    if (!offer) return showToast("Enter an item to offer first.", true);
-    const res = await fetch(`${API}/items/${itemId}/offer`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ buyerId: currentUser.studentId, offerItem: offer })
-    });
-    const data = await res.json();
-    if (!res.ok) return showToast(data.detail, true);
-    showToast("Swap offer sent!");
-    loadItems();
-  }
-
-  async function cancelOffer(itemId) {
-    const res = await fetch(`${API}/items/${itemId}/cancel`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ buyerId: currentUser.studentId })
-    });
-    if (res.ok) {
-      showToast("Offer cancelled.");
-      loadItems();
-    }
-  }
-
-  async function acceptOffer(itemId) {
-    const res = await fetch(`${API}/items/${itemId}/accept`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ownerId: currentUser.studentId })
-    });
-    const data = await res.json();
-    if (!res.ok) return showToast(data.detail, true);
-    showToast("Offer accepted! Mobile numbers unlocked & 4-digit code emailed.");
-    loadItems();
-  }
-
-  async function rejectOffer(itemId) {
-    const res = await fetch(`${API}/items/${itemId}/reject`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ownerId: currentUser.studentId })
-    });
-    if (res.ok) {
-      showToast("Offer declined.");
-      loadItems();
-    }
-  }
-
-  async function deleteListing(itemId) {
-    const res = await fetch(`${API}/items/${itemId}?ownerId=${currentUser.studentId}`, { method: "DELETE" });
-    if (res.ok) {
-      showToast("Listing removed.");
-      loadItems();
-    }
-  }
-
-  async function verifyHandshake(itemId) {
-    const otp = document.getElementById(`otp-in-${itemId}`).value.trim();
-    if (otp.length !== 4) return showToast("Enter the 4-digit handshake code.", true);
-    const res = await fetch(`${API}/items/${itemId}/verify`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ otp: Number(otp) })
-    });
-    const data = await res.json();
-    if (!res.ok) return showToast(data.detail, true);
-    showToast(data.message);
-    await refreshUserProfile();
-    loadItems();
-  }
-
-  // ================= BLOOD BANK FUNCTIONS =================
-  async function loadBlood() {
-    const res = await fetch(`${API}/blood`);
-    const packets = await res.json();
-
-    const groups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
-    document.getElementById("bloodStockStrip").innerHTML = groups.map(g => {
-      const count = packets.filter(p => p.bloodGroup.toUpperCase() === g).length;
-      if (count === 0) {
-        return `
-          <div class="glass-panel p-3.5 rounded-2xl flex flex-col items-center justify-center text-center border-2 border-error/50 bg-error-container/30 relative">
-            <span class="absolute -top-2 px-1.5 py-0.2 rounded-full bg-error text-white text-[9px] font-bold tracking-wider">Low</span>
-            <span class="text-headline-md font-bold text-error">${g}</span>
-            <span class="text-mono-label text-error font-bold mt-1">0 Units</span>
-            <span class="text-[10px] text-error font-semibold">Need Donor</span>
-          </div>`;
-      }
-      return `
-        <div class="glass-panel p-3.5 rounded-2xl flex flex-col items-center justify-center text-center">
-          <span class="text-headline-md font-bold text-text-primary">${g}</span>
-          <span class="text-mono-label text-text-secondary mt-1">${count} Units</span>
-          <span class="text-[10px] text-emerald-700 font-medium">Available</span>
-        </div>`;
-    }).join("");
-
-    const tbody = document.getElementById("bloodTableBody");
-    if (packets.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-text-secondary">No blood units stored right now.</td></tr>`;
-    } else {
-      tbody.innerHTML = packets.map(p => `
-        <tr>
-          <td class="py-3 font-mono-label text-text-primary font-medium">#BLD-${p.packetId}</td>
-          <td class="py-3 font-mono-label font-bold text-text-primary">${p.bloodGroup}</td>
-          <td class="py-3 font-mono-label text-text-secondary">${p.donorId}</td>
-          <td class="py-3 font-mono-label text-text-secondary">${p.centerName}</td>
-          <td class="py-3 text-right">
-            <span class="inline-flex items-center gap-1 text-mono-label text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded-full font-medium">Ready for Dispatch</span>
-          </td>
-        </tr>`).join("");
-    }
-  }
-
-  async function submitDonation(e) {
-    e.preventDefault();
-    const payload = {
-      donorId: currentUser.studentId,
-      bloodGroup: document.getElementById("donateGroup").value,
-      centerName: document.getElementById("donateCenter").value.trim()
-    };
-    const res = await fetch(`${API}/blood/donate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (!res.ok) return showToast(data.detail, true);
-    showToast("Blood donation logged! +25 Eco-Points credited.");
-    await refreshUserProfile();
-    loadBlood();
-  }
-
-  async function submitDispatch(e) {
-    e.preventDefault();
-    const payload = {
-      hospitalName: document.getElementById("reqHospital").value.trim(),
-      requiredGroup: document.getElementById("reqGroup").value,
-      urgency: Number(document.getElementById("reqUrgency").value)
-    };
-    const res = await fetch(`${API}/blood/dispatch`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (!res.ok) return showToast(data.detail, true);
-    showToast(`Dispatched Unit #${data.packet.packetId} (${data.packet.bloodGroup}) — ${data.matchType}`);
-    loadBlood();
-  }
-
-  // ================= HISTORY FUNCTIONS =================
-  async function loadHistory() {
-    const [swapRes, bloodRes] = await Promise.all([
-      fetch(`${API}/items/history`),
-      fetch(`${API}/blood/history`)
-    ]);
-    const swaps = await swapRes.json();
-    const dispatches = await bloodRes.json();
-
-    document.getElementById("swapHistoryList").innerHTML = swaps.length === 0
-      ? `<div class="p-4 rounded-2xl bg-white/60 border border-glass-border text-body-sm text-text-secondary">No completed swaps yet.</div>`
-      : swaps.map(line => `<div class="p-4 rounded-2xl bg-white/60 border border-glass-border text-mono-label text-text-primary">${line}</div>`).join("");
-
-    document.getElementById("bloodHistoryList").innerHTML = dispatches.length === 0
-      ? `<div class="p-4 rounded-2xl bg-white/60 border border-glass-border text-body-sm text-text-secondary">No hospital dispatches recorded yet.</div>`
-      : dispatches.map(line => `<div class="p-4 rounded-2xl bg-white/60 border border-glass-border text-mono-label text-text-primary">${line}</div>`).join("");
-  }
-
-  // Initial Load
-  refreshUserProfile();
-  loadItems();
+loadAll();
 </script>
-</body></html>
+</body>
+</html>

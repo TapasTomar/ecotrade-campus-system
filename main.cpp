@@ -7,7 +7,6 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    // Check if command is passed
     if (argc < 2) {
         cout << "ERROR|No work given" << endl;
         return 1;
@@ -18,68 +17,27 @@ int main(int argc, char* argv[]) {
     Barter b;
     BloodDonate bd;
 
-    // 1. New Account Check
     if (work == "SIGNUP" && argc == 9) {
-        string roll = argv[2];
-        string name = argv[3];
-        string email = argv[4];
-        string phone = argv[5];
-        string pass = argv[6];
-        string typedOtp = argv[7];
-        string savedOtp = argv[8];
-
-        cout << s.checkSignup(roll, name, email, phone, pass, typedOtp, savedOtp) << endl;
+        cout << s.checkSignup(argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]) << endl;
     }
-    // 2. Login Check
     else if (work == "LOGIN" && argc == 6) {
-        string roll = argv[2];
-        string pass = argv[3];
-        string typedOtp = argv[4];
-        string savedOtp = argv[5];
-
-        cout << s.checkLogin(roll, pass, typedOtp, savedOtp) << endl;
+        cout << s.checkLogin(argv[2], argv[3], argv[4], argv[5]) << endl;
     }
-    // 3. Send Offer Check
     else if (work == "OFFER" && argc == 5) {
-        string ownerRoll = argv[2];
-        string buyerRoll = argv[3];
-        string itemStatus = argv[4];
-
-        cout << b.checkOffer(ownerRoll, buyerRoll, itemStatus) << endl;
+        cout << b.checkOffer(argv[2], argv[3], argv[4]) << endl;
     }
-    // 4. Accept Offer & Make 4-Digit Code
     else if (work == "ACCEPT" && argc == 4) {
-        string ownerRoll = argv[2];
-        string buyerRoll = argv[3];
-
-        cout << b.acceptOffer(ownerRoll, buyerRoll) << endl;
+        cout << b.acceptOffer(argv[2], argv[3]) << endl;
     }
-    // 5. Hide or Show Phone Number
     else if (work == "PRIVACY" && argc == 6) {
-        string userRoll = argv[2];
-        string ownerRoll = argv[3];
-        string buyerRoll = argv[4];
-        string itemStatus = argv[5];
-
-        cout << b.canViewMobile(userRoll, ownerRoll, buyerRoll, itemStatus) << endl;
+        cout << b.canViewMobile(argv[2], argv[3], argv[4], argv[5]) << endl;
     }
-    // 6. Check 4-Digit Meetup Code
     else if (work == "HANDSHAKE" && argc == 4) {
-        string typedCode = argv[2];
-        string realCode = argv[3];
-
-        cout << b.verifyHandshake(typedCode, realCode) << endl;
+        cout << b.verifyHandshake(argv[2], argv[3]) << endl;
     }
-    // 7. Blood Bank Request
     else if (work == "BLOOD" && argc == 6) {
-        string bloodGroup = argv[2];
-        int totalBags = stoi(argv[3]);
-        int needBags = stoi(argv[4]);
-        int urgentLevel = stoi(argv[5]);
-
-        cout << bd.dispatch(bloodGroup, totalBags, needBags, urgentLevel) << endl;
+        cout << bd.dispatch(argv[2], stoi(argv[3]), stoi(argv[4]), stoi(argv[5])) << endl;
     }
-    // 8. Check if C++ is Working
     else if (work == "STATUS") {
         cout << "ONLINE|C++ Backend Active (student.h, Barter.h, blooddonate.h)" << endl;
     }

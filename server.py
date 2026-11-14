@@ -75,7 +75,7 @@ class BloodRequestModel(BaseModel):
     urgency: int = 1
 
 
-# --- Frontend HTML Routes ---
+# --- Website Pages ---
 @app.get("/")
 @app.get("/login.html")
 def serve_login():
@@ -92,15 +92,13 @@ def cpp_status():
     return {"status": parts[0], "engine": parts[1]}
 
 
-# --- Universal OTP Route (Handles Both Signup Email & Login Student ID) ---
+# --- Auth API (C++ student.h + Neon DB) ---
 @app.post("/api/auth/send-otp")
-@app.post("/api/send-otp")
 async def send_otp(request: Request):
     data = await request.json()
-    email = str(data.get("email") or data.get("user_email") or data.get("to_email") or "").strip().lower()
-    sid = str(data.get("student_id") or data.get("sid") or data.get("id") or "").strip()
+    email = str(data.get("email") or "").strip().lower()
+    sid = str(data.get("student_id") or "").strip()
 
-    # If user is on Login tab (only student_id provided), look up registered email from DB
     if not email and sid:
         conn = db.get_connection()
         cur = conn.cursor()
@@ -108,31 +106,25 @@ async def send_otp(request: Request):
             cur.execute("SELECT email FROM users WHERE student_id=%s", (sid,))
             row = cur.fetchone()
             if not row:
-                raise HTTPException(status_code=404, detail="Student ID not found. Please Sign Up first.")
+                raise HTTPException(status_code=404, detail="Student ID not registered")
             email = row[0].strip().lower()
         finally:
             cur.close()
             conn.close()
 
     if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="Enter your Student ID (for Login) or Email (for Signup) first")
+        raise HTTPException(status_code=400, detail="Enter your Student ID or Email first")
 
     otp = str(random.randint(100000, 999999))
     otp_store[email] = otp
     if sid:
         otp_store[sid] = otp
 
-    sent = send_mail(
-        email,
-        "EcoTrade Campus - Verification OTP",
-        f"Your EcoTrade OTP is: {otp}\nValid for 10 minutes."
-    )
-    if not sent:
-        raise HTTPException(status_code=500, detail="Failed to send OTP email. Check Brevo API key.")
+    if not send_mail(email, "EcoTrade Campus - OTP", f"Your EcoTrade OTP is: {otp}"):
+        raise HTTPException(status_code=500, detail="Failed to send OTP email")
     return {"message": f"OTP sent to {email}"}
 
 
-# --- Signup Route (Executed by C++ student.h) ---
 @app.post("/api/auth/signup")
 def signup(req: SignupRequest):
     email = req.email.strip().lower()
@@ -157,13 +149,12 @@ def signup(req: SignupRequest):
         return {"message": "Account created via C++ Backend", "student_id": sid}
     except Exception:
         conn.rollback()
-        raise HTTPException(status_code=400, detail="Student ID or Email already registered")
+        raise HTTPException(status_code=400, detail="Student ID or Email already exists")
     finally:
         cur.close()
         conn.close()
 
 
-# --- Login Route (Executed by C++ student.h) ---
 @app.post("/api/auth/login")
 def login(req: LoginRequest):
     sid = req.student_id.strip()
@@ -195,7 +186,7 @@ def login(req: LoginRequest):
         conn.close()
 
 
-# --- Barter Marketplace Routes (Executed by C++ Barter.h) ---
+# --- Barter API (C++ Barter.h + Neon DB) ---
 @app.get("/api/items")
 def get_items(viewer_id: str = ""):
     conn = db.get_connection()
@@ -364,13 +355,13 @@ def complete_handshake(req: CompleteHandshakeRequest):
         call_cpp("HANDSHAKE", req.handshake_code.strip(), row[0] or "")
         cur.execute("UPDATE items SET status='COMPLETED' WHERE id=%s", (req.item_id,))
         conn.commit()
-        return {"message": "Barter exchange verified and completed via C++"}
+        return {"message": "Barter completed via C++"}
     finally:
         cur.close()
         conn.close()
 
 
-# --- Blood Bank Priority Queue Routes (Executed by C++ blooddonate.h) ---
+# --- Blood Bank API (C++ blooddonate.h + Neon DB) ---
 @app.get("/api/blood/stock")
 def get_blood_stock():
     conn = db.get_connection()
