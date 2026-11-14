@@ -35,7 +35,7 @@ def call_cpp(*args) -> list[str]:
 
 
 class OtpRequest(BaseModel):
-    email: str
+    email: str = ""
 
 class SignupRequest(BaseModel):
     student_id: str
@@ -93,10 +93,14 @@ def cpp_status():
 # --- Auth Routes (Executed by C++ student.h) ---
 @app.post("/api/auth/send-otp")
 def send_otp(req: OtpRequest):
+    email = req.email.strip()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Please enter a valid email address first")
+
     otp = str(random.randint(100000, 999999))
-    otp_store[req.email] = otp
+    otp_store[email] = otp
     sent = send_mail(
-        req.email,
+        email,
         "EcoTrade Campus - Verification OTP",
         f"Your EcoTrade verification OTP is: {otp}\nValid for 10 minutes."
     )
@@ -107,8 +111,9 @@ def send_otp(req: OtpRequest):
 
 @app.post("/api/auth/signup")
 def signup(req: SignupRequest):
-    real_otp = otp_store.get(req.email, "")
-    call_cpp("SIGNUP", req.student_id, req.name, req.email, req.mobile, req.password, req.otp, real_otp)
+    email = req.email.strip()
+    real_otp = otp_store.get(email, "")
+    call_cpp("SIGNUP", req.student_id, req.name, email, req.mobile, req.password, req.otp, real_otp)
 
     conn = db.get_connection()
     cur = conn.cursor()
@@ -118,10 +123,10 @@ def signup(req: SignupRequest):
             INSERT INTO users (student_id, name, email, mobile, blood_group, password)
             VALUES (%s, %s, %s, %s, %s, %s)
             """,
-            (req.student_id, req.name, req.email, req.mobile, req.blood_group, req.password)
+            (req.student_id, req.name, email, req.mobile, req.blood_group, req.password)
         )
         conn.commit()
-        otp_store.pop(req.email, None)
+        otp_store.pop(email, None)
         return {"message": "Account created via C++ Backend", "student_id": req.student_id}
     except Exception:
         conn.rollback()
