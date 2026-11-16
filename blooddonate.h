@@ -37,7 +37,7 @@ class EmergencyRequest {
 public:
     string hospitalName;
     string requiredGroup;
-    int urgency;        // 3 = Critical (ICU), 2 = High (OT), 1 = Routine
+    int urgency;       
     int arrivalOrder;
 
     EmergencyRequest(string hName, string bGroup, int urg, int order) {
