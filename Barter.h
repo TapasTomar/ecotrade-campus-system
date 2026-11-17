@@ -48,7 +48,7 @@ public:
     string offerItem;
     int otpCode;
 
-    ElectronicNode* next;
+    ElectronicNode* next;   // doubly linked list
     ElectronicNode* prev;
 
     ElectronicNode(int itemId, long long sId, string itemName, string cond, string want)
@@ -80,12 +80,13 @@ public:
     }
 };
 
+// major functions required 
 class BarterEngine {
 private:
     ElectronicNode* head;
     ElectronicNode* tail;
     int nextId;
-    unordered_map<int, ElectronicNode*> itemMap;
+    unordered_map<int, ElectronicNode*> itemMap;    // unordered map 
 
     // Delete node from Doubly Linked List in O(1)
     void deleteNode(ElectronicNode* node) {
