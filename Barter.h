@@ -402,6 +402,7 @@ public:
         }
         return 0;
     }
+
     // last step of request
     bool verifyHandshakeAndClose(int itemId, int userOtp) {
         if (itemMap.find(itemId) == itemMap.end()) {
