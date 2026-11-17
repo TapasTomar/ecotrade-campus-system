@@ -160,6 +160,7 @@ public:
             cout << "\n[SUCCESS] Blood Packet Stored! Packet ID: " << nextPacketId << endl;
             saveData();
         }
+        
         nextPacketId++;
         return true;
     }
